@@ -16,10 +16,20 @@ git push
 
 | Section | What it does |
 |---|---|
-| Library | Search with a Search button (Enter works too; on phones it closes the keyboard and jumps to results). Filter by building type and category. A standard of the day. A detail sheet for each standard with its drawing, values, notes, calculator, citation and Save to project. |
+| Library (home) | Search first. Then **What are you designing?**: eight building types, each opening a page (`#/b/<type>`) with every standard and the chosen state's rules in design order (site and bylaws, rooms, stairs, access, light, fire, water and toilets, parking), with "Save all to a new project" and "Download all · PDF". Then **Today**: standard of the day, a one-question daily check with a streak, and what's new since the last visit. Recently viewed, and topics. |
 | Bylaws (`#/bylaws/<state>`) | State building rules, grouped by topic (setbacks, height and FSI, high-rise, parking). Bylaw rules also appear in Library search results. |
-| Calculators (`#/tools`) | Water tanks, toilets required, occupants and exit width, ramp, window area, parking area. |
-| Projects | Saved on the device (`localStorage` key `ax.standards.v1`). Each project is a checklist with a status (To do, Complies, Check) and a note per item, plus suggestions for its building type. It prints. |
+| Calculators (`#/tools`) | NBC: water tanks, toilets, occupants and exit width, ramp, window area, parking area. Tamil Nadu (TNCDBR): setbacks, FSI and floor area, parking spaces. The same calculators open inside each rule. |
+| Projects | Saved on the device (`localStorage` key `ax.standards.v1`). Each project is a checklist with a status and a note per item. Download all as a PDF book (with drawings, statuses and notes) or a checklist PDF; the drawing pack (DWG, DXF, A3 PDF) is a Solo feature. |
+
+## Downloads and plans
+
+- **Free:** a PDF of any standard, a whole building, or a project (the browser's Save as PDF, from a print layout in `style.css`).
+- **Solo (₹999 a month, from the business plan):** the CAD drawings (DWG, DXF) and the A3 PDF drawing sheets to scale, and project drawing packs. The buttons open a Solo panel; there is no payment or file delivery yet.
+
+## Keeping people coming back
+
+- **Daily check:** `QUIZ` in `data.js`, one question a day, with a streak (`ax.standards.daily.v1`).
+- **What's new:** `UPDATES` in `data.js`. Add a line with each content change; returning visitors see a count of what is new since their last visit (`ax.standards.prefs.v1`, which also keeps the chosen state and recently viewed).
 
 ## Files
 
@@ -41,7 +51,9 @@ git push
   - accessible lift
   - wheelchair space and turning
 - **DWG and DXF files** are in `../standards-cad/`, outside this public repository, because they are for paying users. The detail sheet shows a "Download · Pro" button that is not live yet.
-- **Web previews:** the SVGs in `figs/` are exported from the same drawings and recoloured with `../standards-cad/web-colours.sh`.
+- **Text:** the Standard text style uses Bahnschrift (a TrueType font that comes with Windows).
+- **PDF sheets:** A3, at true scale, with an ArchXchange title block, in `../standards-cad/`. They are printed by headless Edge from an HTML sheet around a print-coloured SVG.
+- **Web previews:** the SVGs in `figs/` are exported from the same drawings, with coordinates rounded and recoloured to the web palette.
 - The window-area figure was made in VectorCraft.
 
 ## Sources and rules for adding content

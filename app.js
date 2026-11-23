@@ -42,11 +42,28 @@
 	let toastT;
 	function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2200); }
 
-	/* ---------- Library ---------- */
-	const state = { q: "", type: "", cat: "" };
-	$("types").innerHTML = [{ id: "", name: "All" }].concat(TYPES).map((t) => '<button type="button" role="radio" data-type="' + t.id + '" aria-checked="' + (t.id === "") + '">' + esc(t.name) + "</button>").join("");
+	/* ---------- This device: preferences, recently viewed, daily check ---------- */
+	const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v && typeof v === "object" ? v : d; } catch (_e) { return d; } };
+	const keep = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_e) { /* storage unavailable */ } };
+	const PREF = "ax.standards.prefs.v1", DAILY = "ax.standards.daily.v1";
+	const prefs = load(PREF, {});
+	if (!stateOf(prefs.state)) prefs.state = "tn";
+	if (!Array.isArray(prefs.recent)) prefs.recent = [];
+	const day = (d) => d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+	const TODAY = day(new Date()), YESTERDAY = day(new Date(Date.now() - 864e5));
+	const lastSeen = typeof prefs.seen === "string" ? prefs.seen : "";
+	prefs.seen = TODAY;
+	keep(PREF, prefs);
+	const viewed = (id) => { prefs.recent = [id].concat(prefs.recent.filter((x) => x !== id)).slice(0, 8); keep(PREF, prefs); };
+	const daily = load(DAILY, {});
+	if (!daily.ans || typeof daily.ans !== "object") daily.ans = {};
+	const dayNo = Math.floor(Date.parse(TODAY) / 864e5);
+
+	/* ---------- Library: home, search, topics ---------- */
+	const state = { q: "", cat: "" };
 	$("popular").innerHTML = ["setback", "toilets", "water tank", "stair riser", "ramp", "parking", "kitchen size", "fsi", "door width"].map((q) => '<button type="button" class="chip">' + q + "</button>").join("");
 	TYPES.forEach((t) => { $("np-type").insertAdjacentHTML("beforeend", '<option value="' + t.id + '">' + esc(t.name) + "</option>"); });
+	$("state-pick").innerHTML = B.STATES.map((x) => '<option value="' + x.id + '">' + esc(x.name) + "</option>").join("");
 
 	const words = (q) => q.toLowerCase().replace(/[^a-z0-9.:/ ]+/g, " ").split(/\s+/).filter((w) => w.length > 1);
 	function score(s, ws) {
@@ -66,50 +83,174 @@
 		ws.forEach((w) => { const stem = w.replace(/s$/, ""); if (stem.length > 1) out = out.replace(new RegExp("(" + stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig"), "<mark>$1</mark>"); });
 		return out;
 	}
+	const saveBtn = (s) => '<button type="button" class="save' + (savedIn(s.id) ? " on" : "") + '" data-save="' + s.id + '" aria-label="Save to project" title="Save to project">' + BOOK + "</button>";
 	function card(s, ws) {
 		return '<article class="card" data-id="' + s.id + '" tabindex="0">' +
 			'<span class="k">' + esc(label(s)) + "</span>" +
 			"<h3>" + hl(s.title, ws || []) + "</h3>" +
 			'<div><div class="v num grad">' + esc(s.value) + '</div><p class="s">' + esc(s.sub) + "</p></div>" +
-			'<p class="src"><span>' + esc(cite(s)) + "</span>" + (figOf(s) ? '<span class="fig-dot">◆ Drawing</span>' : "") + "</p>" +
-			'<button type="button" class="save' + (savedIn(s.id) ? " on" : "") + '" data-save="' + s.id + '" aria-label="Save to project" title="Save to project">' + BOOK + "</button></article>";
+			'<p class="src"><span>' + esc(cite(s)) + "</span>" + (figOf(s) ? '<span class="fig-dot">◆ Drawing</span>' : "") + "</p>" + saveBtn(s) + "</article>";
 	}
 	function renderLibrary() {
 		const ws = words(state.q);
 		const list = STANDARDS.map((s) => ({ s: s, sc: score(s, ws) }))
-			.filter((x) => x.sc > 0 && fits(x.s, state.type) && (!state.cat || x.s.cat === state.cat) && (ws.length || x.s.cat !== "bylaws"))
+			.filter((x) => x.sc > 0 && (!state.cat || x.s.cat === state.cat) && (ws.length || x.s.cat !== "bylaws"))
 			.sort((a, b) => b.sc - a.sc);
-		$("library").classList.toggle("searching", ws.length > 0);
+		$("library").classList.toggle("searching", ws.length > 0 || !!state.cat);
 		$("results").innerHTML = list.map((x) => card(x.s, ws)).join("");
 		$("none").hidden = list.length > 0;
 		$("count").textContent = list.length + " of " + STANDARDS.length;
-		$("results-title").textContent = state.q ? "Results for “" + state.q + "”" : state.cat ? catName(state.cat) : state.type ? "For " + typeName(state.type).toLowerCase() + " buildings" : "All standards";
-		$("cats").innerHTML = CATS.map((c) => {
-			const n = STANDARDS.filter((s) => s.cat === c.id && fits(s, state.type)).length;
-			return '<button type="button" class="cat' + (state.cat === c.id ? " on" : "") + '" data-cat="' + c.id + '"><b>' + esc(c.name) + "<i>" + n + "</i></b><small>" + esc(c.blurb) + "</small></button>";
-		}).join("");
-		document.querySelectorAll("#types button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.type === state.type)));
-	}
-	function renderToday() {
-		const pool = STANDARDS.filter((x) => x.cat !== "bylaws" && /^[0-9]/.test(x.value)); // a real number makes a better daily headline
-		const s = pool[Math.floor(Date.now() / 864e5) % pool.length];
-		$("today").innerHTML = '<button type="button" class="today-card" data-id="' + s.id + '"><div><span class="k">Standard of the day · ' + esc(catName(s.cat)) + "</span><h3>" + esc(s.title) + "</h3><p>" + esc(s.sub) + " · " + esc(cite(s)) + '</p></div><div class="v num grad">' + esc(s.value) + "</div></button>";
+		$("results-title").textContent = state.q ? "Results for “" + state.q + "”" : catName(state.cat);
+		renderHome();
 	}
 
-	$("q").addEventListener("input", (e) => { state.q = e.target.value; renderLibrary(); });
+	/* Home: the daily strip, "what are you designing?", recently viewed, topics */
+	const ICON = {
+		res: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+		edu: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/>',
+		health: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>',
+		assembly: '<path d="M3 20h18M5 20v-4h14v4M7 16v-3h10v3M9 13v-3h6v3"/>',
+		business: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
+		retail: '<path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/>',
+		industrial: '<path d="M3 20V10l5 3v-3l5 3v-3l5 3V4h3v16z"/>',
+		storage: '<path d="M3 9l9-5 9 5v11H3z"/><path d="M7 20v-7h10v7M7 16h10"/>',
+	};
+	const icon = (t) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (ICON[t] || "") + "</svg>";
+	const forBuilding = (type) => STANDARDS.filter((s) => s.cat === "bylaws" ? s.state === prefs.state && fits(s, type) : fits(s, type));
+	const QUIZ = window.AXS.QUIZ || [], UPDATES = window.AXS.UPDATES || [];
+
+	function renderDaily() {
+		const pool = STANDARDS.filter((x) => x.cat !== "bylaws" && /^[0-9]/.test(x.value)); // a real number makes a better daily headline
+		const s = pool[dayNo % pool.length];
+		const streak = daily.last === TODAY || daily.last === YESTERDAY ? daily.streak || 0 : 0;
+		let quiz = "";
+		if (QUIZ.length) {
+			const q = QUIZ[dayNo % QUIZ.length], pick = daily.ans[TODAY], shift = dayNo % 3;
+			const order = [0, 1, 2].map((i) => (i + shift) % 3);
+			quiz = '<div class="d-card quiz"><span class="k">Daily check' + (streak ? ' · <b class="streak">' + streak + "-day streak</b>" : "") + "</span><h3>" + esc(q.q) + '</h3><div class="opts">' +
+				order.map((i) => '<button type="button" data-ans="' + i + '" class="' + (pick == null ? "" : i === 0 ? "right" : i === pick ? "wrong" : "dim") + '"' + (pick == null ? "" : " disabled") + ">" + esc(q.o[i]) + "</button>").join("") + "</div>" +
+				(pick == null ? '<p class="d-foot">One question a day. Come back tomorrow to keep your streak.</p>' : '<p class="d-foot">' + (pick === 0 ? "Right. " : "Not quite: it is " + esc(q.o[0]) + ". ") + '<a href="#/s/' + q.id + '">Read the standard →</a></p>') + "</div>";
+		}
+		const fresh = UPDATES.filter((u) => lastSeen && u.d > lastSeen);
+		const news = '<div class="d-card news"><span class="k">What\'s new' + (fresh.length ? ' · <b class="badge">' + fresh.length + " since your last visit</b>" : "") + '</span><ul>' +
+			UPDATES.slice(0, 4).map((u) => '<li><a href="#/s/' + u.id + '">' + esc(u.t) + "</a></li>").join("") + "</ul></div>";
+		$("daily").innerHTML = '<button type="button" class="d-card today-card" data-id="' + s.id + '"><span class="k">Standard of the day · ' + esc(catName(s.cat)) + '</span><div class="v num grad">' + esc(s.value) + "</div><h3>" + esc(s.title) + "</h3><p>" + esc(s.sub) + "</p></button>" + quiz + news;
+	}
+	$("daily").addEventListener("click", (e) => {
+		const b = e.target.closest("[data-ans]");
+		if (!b || daily.ans[TODAY] != null) return;
+		const i = Number(b.dataset.ans);
+		daily.streak = daily.last === YESTERDAY ? (daily.streak || 0) + 1 : daily.last === TODAY ? daily.streak || 1 : 1;
+		daily.last = TODAY;
+		daily.ans[TODAY] = i;
+		Object.keys(daily.ans).sort().slice(0, -60).forEach((k) => { delete daily.ans[k]; }); // keep two months
+		keep(DAILY, daily);
+		renderDaily();
+		toast(i === 0 ? "Right! " + daily.streak + "-day streak" : "Streak: " + daily.streak + " days. Tomorrow's another one.");
+	});
+
+	function renderHome() {
+		$("state-pick").value = prefs.state;
+		$("buildings").innerHTML = TYPES.map((t) => '<a class="bld" href="#/b/' + t.id + '"><span class="bld-ico">' + icon(t.id) + "</span><b>" + esc(t.name) + "</b><small>" + esc(t.eg || "") + '</small><i class="num">' + forBuilding(t.id).length + "</i></a>").join("");
+		const recent = prefs.recent.map(byId).filter(Boolean).slice(0, 6);
+		$("recent").innerHTML = recent.length ? '<div class="sec-head"><h2>Recently viewed</h2></div><div class="chips recent">' + recent.map((s) => '<button type="button" class="chip" data-open="' + s.id + '">' + esc(s.title) + " <b>" + esc(s.value) + "</b></button>").join("") + "</div>" : "";
+		$("cats").innerHTML = CATS.map((c) => '<button type="button" class="cat" data-cat="' + c.id + '"><b>' + esc(c.name) + "<i>" + STANDARDS.filter((s) => s.cat === c.id).length + "</i></b><small>" + esc(c.blurb) + "</small></button>").join("");
+	}
+	$("state-pick").addEventListener("change", (e) => { prefs.state = e.target.value; keep(PREF, prefs); renderHome(); });
+
+	/* ---------- One building: everything it needs, in design order ---------- */
+	const STAGES = [["site", "Site and bylaws"], ["spaces", "Rooms and spaces"], ["stairs", "Stairs and parapets"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and exits"], ["services", "Water and toilets"], ["parking", "Parking"]];
+	const STAGE_OF = { planning: "site", rooms: "spaces", water: "services", sanitary: "services" };
+	const stageOf = (s) => s.cat === "bylaws" ? (s.topic === "Parking" ? "parking" : "site") : STAGE_OF[s.cat] || s.cat;
+	const srcTag = (s) => s.cat === "bylaws" ? s.state.toUpperCase() : s.src[0].split(" ")[0];
+	function row(s) {
+		const fig = figOf(s);
+		return '<article class="rowi" data-id="' + s.id + '" tabindex="0">' +
+			(fig ? '<img class="thumb" src="' + fig + '" alt="" loading="lazy">' : '<span class="thumb tag-only">' + esc(srcTag(s)) + "</span>") +
+			'<div class="ri"><h3>' + esc(s.title) + '</h3><p class="s">' + esc(s.sub) + '</p><p class="src">' + esc(cite(s)) + (s.calc && CALC[s.calc] ? ' <span class="has-calc">∑ Calculator</span>' : "") + "</p></div>" +
+			'<div class="ri-v num grad">' + esc(s.value) + "</div>" + saveBtn(s) + "</article>";
+	}
+	function renderBuilding(type) {
+		const t = TYPES.find((x) => x.id === type);
+		if (!t) { location.hash = "#/"; return; }
+		const st = stateOf(prefs.state), list = forBuilding(type);
+		const groups = STAGES.map((g) => [g[0], g[1], list.filter((s) => stageOf(s) === g[0])]).filter((g) => g[2].length);
+		const rules = list.some((s) => s.cat === "bylaws");
+		$("building").innerHTML = '<div class="b-head"><a class="back" href="#/">← All buildings</a>' +
+			'<div class="b-title"><span class="bld-ico lg">' + icon(type) + '</span><div><span class="k">NBC group ' + esc(t.nbc) + " · " + esc(st.name) + " rules</span><h1>" + esc(t.name) + "</h1></div></div>" +
+			'<p class="sub">' + list.length + " standards and rules, in the order you design: site first, parking last. Tap one for its drawing, calculator and clause.</p>" +
+			(rules ? "" : '<p class="sub">' + esc(st.name) + ' rules are being added. Until then, <a href="#/bylaws/' + st.id + '">see the official document</a>.</p>') +
+			'<div class="b-actions"><button type="button" class="btn primary" id="b-save">Save all to a new project</button><button type="button" class="btn" id="b-pdf">Download all · PDF</button></div></div>' +
+			'<nav class="stages" aria-label="Design stages">' + groups.map((g, i) => '<button type="button" data-goto="st-' + g[0] + '"><i>' + (i + 1) + "</i>" + esc(g[1]) + "</button>").join("") + "</nav>" +
+			groups.map((g, i) => '<section class="stage" id="st-' + g[0] + '"><h2><i>' + (i + 1) + "</i>" + esc(g[1]) + '<span class="count">' + g[2].length + '</span></h2><div class="rowlist">' + g[2].map(row).join("") + "</div></section>").join("");
+		$("b-save").addEventListener("click", () => {
+			const name = window.prompt("Name the project", t.name + " project");
+			if (name == null) return;
+			const p = newProject(name, type);
+			list.forEach((s) => p.items.push({ id: s.id, s: "todo", note: "" }));
+			persist();
+			toast("Saved " + list.length + " to " + p.name);
+			location.hash = "#/p/" + p.id;
+		});
+		$("b-pdf").addEventListener("click", () => printBook(t.name + ": standards and rules", "NBC 2016 and " + st.short, list.map((s) => ({ s: s }))));
+	}
+	$("building").addEventListener("click", (e) => { const b = e.target.closest("[data-goto]"); if (b) $(b.dataset.goto).scrollIntoView({ behavior: "smooth", block: "start" }); });
+
+	/* ---------- PDF: one standard, a building, or a project, through the browser's Save as PDF ---------- */
+	function printBook(title, sub, entries) {
+		const book = $("book"), order = STAGES.map((g) => g[0]), figsShown = new Set();
+		entries = entries.slice().sort((a, b) => order.indexOf(stageOf(a.s)) - order.indexOf(stageOf(b.s)));
+		let stage = "";
+		book.innerHTML = '<header class="bk-head"><div class="bk-brand">ARCH<b>X</b>CHANGE <span>Standards</span></div><h1>' + esc(title) + "</h1><p>" + esc(sub) + " · " + entries.length + (entries.length === 1 ? " item" : " items") + " · " + new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) + "</p></header>" +
+			entries.map((en) => {
+				const s = en.s, x = en.x, fig = figsShown.has(s.fig) ? "" : figOf(s), st = stageOf(s);
+				if (fig) figsShown.add(s.fig);
+				const head = entries.length > 1 && st !== stage ? '<h3 class="bk-stage">' + (order.indexOf(st) + 1) + ". " + esc(STAGES[order.indexOf(st)][1]) + "</h3>" : "";
+				stage = st;
+				return head + '<article class="bk-item"><span class="k">' + esc(label(s)) + "</span><h2>" + esc(s.title) + (x ? ' <em class="bk-st">' + esc((STATUS.find((t) => t[0] === x.s) || STATUS[0])[1]) + "</em>" : "") + '</h2><div class="bk-v">' + esc(s.value) + "</div><p>" + esc(s.sub) + "</p>" +
+					(fig ? '<img src="' + fig + '" alt="">' : "") +
+					(s.rows ? "<table>" + s.rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table>" : "") +
+					(s.notes ? "<ul>" + s.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul>" : "") +
+					(x && x.note ? '<p class="bk-note">Note: ' + esc(x.note) + "</p>" : "") + '<p class="bk-src">' + esc(cite(s)) + "</p></article>";
+			}).join("") +
+			'<footer class="bk-foot">Summarised by ArchXchange in our own words, with the clause to cite. Read the source for the full text and exceptions; local bylaws and later amendments prevail. archxchange.in</footer>';
+		document.body.classList.add("book-mode");
+		toast("Choose “Save as PDF” in the print window");
+		const imgs = Array.from(book.querySelectorAll("img"));
+		Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : null))).then(() => window.print());
+	}
+	window.addEventListener("afterprint", () => document.body.classList.remove("book-mode"));
+
+	/* ---------- Solo plan: CAD and drawing PDFs ---------- */
+	function openPro(what) {
+		lastFocus = document.activeElement;
+		$("sheet").innerHTML = '<button type="button" class="sh-close" id="sh-close" aria-label="Close">✕</button><span class="k">ArchXchange Solo</span>' +
+			'<h2 class="sh-title" id="sh-title">' + esc(what) + " come with Solo</h2>" +
+			'<div class="sh-value num grad">₹999 <small>a month</small></div><p class="sh-sub">One price per firm, before GST. The first 100 founding firms lock it for life.</p>' +
+			'<ul class="pro-list"><li><b>CAD drawings</b>DWG and DXF, layered, dimensioned, ready for your sheets</li><li><b>A3 PDF sheets</b>to scale, with title block</li><li><b>Project packs</b>every drawing a project needs, in one download</li><li><b>The workspace</b>proposals, GST invoices and reminders, 5 active projects</li></ul>' +
+			'<p class="caveat">Search, calculators, bylaws, saved projects and PDF standard sheets stay free.</p>' +
+			'<div class="sh-actions"><a class="btn primary" href="https://www.archxchange.in/" target="_blank" rel="noopener">Get founding access</a><button type="button" class="btn" id="pro-x">Not now</button></div>';
+		$("sheet").hidden = $("sheet-back").hidden = false;
+		document.body.style.overflow = "hidden";
+		$("sh-close").addEventListener("click", closeSheet);
+		$("pro-x").addEventListener("click", closeSheet);
+		$("sh-close").focus();
+	}
+
+	$("q").addEventListener("input", (e) => { state.q = e.target.value; state.cat = ""; renderLibrary(); });
 	$("search").addEventListener("submit", (e) => {
 		e.preventDefault();
-		state.q = $("q").value; renderLibrary();
+		state.q = $("q").value; state.cat = ""; renderLibrary();
 		$("q").blur(); // closes the phone keyboard so the results show
 		$("results-head").scrollIntoView({ behavior: "smooth", block: "start" });
 	});
+	$("clear").addEventListener("click", () => { $("q").value = state.q = ""; state.cat = ""; renderLibrary(); window.scrollTo(0, 0); });
 	$("popular").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; $("q").value = state.q = b.textContent; state.cat = ""; renderLibrary(); $("results-head").scrollIntoView({ behavior: "smooth", block: "start" }); });
-	$("types").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; state.type = b.dataset.type; renderLibrary(); });
-	$("cats").addEventListener("click", (e) => { const b = e.target.closest(".cat"); if (!b) return; state.cat = state.cat === b.dataset.cat ? "" : b.dataset.cat; renderLibrary(); });
+	$("cats").addEventListener("click", (e) => { const b = e.target.closest(".cat"); if (!b) return; $("q").value = state.q = ""; state.cat = b.dataset.cat; renderLibrary(); $("results-head").scrollIntoView({ behavior: "smooth", block: "start" }); });
 	document.addEventListener("keydown", (e) => {
 		if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") { e.preventDefault(); location.hash = "#/"; $("q").focus(); }
 		if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
-		if (e.key === "Enter" && e.target.classList && e.target.classList.contains("card")) openSheet(e.target.dataset.id);
+		if (e.key === "Enter" && e.target.classList && (e.target.classList.contains("card") || e.target.classList.contains("rowi"))) openSheet(e.target.dataset.id);
 	});
 	// Cards anywhere: open the detail, or save with the bookmark.
 	document.addEventListener("click", (e) => {
@@ -124,7 +265,7 @@
 			if (!$("project").hidden) refresh();
 			return;
 		}
-		const c = e.target.closest(".card, .today-card, [data-open]");
+		const c = e.target.closest(".card, .rowi, .today-card, [data-open]");
 		if (c) openSheet(c.dataset.id || c.dataset.open);
 	});
 
@@ -202,6 +343,73 @@
 		window: { title: "Minimum window area", src: "NBC 2016, Part 3, cl. 20.1.2",
 			form: () => num("a", "Floor area, m²", 12) + sel("c", "Climate", '<option value="10">Hot-dry</option><option value="6">Warm-humid</option><option value="8" selected>Temperate / composite</option><option value="12">Cold</option>'),
 			run: (g) => { const a = g("a"), d = g("c"); return a ? out(fmt(a / d, 2) + " m²", "Windows and ventilators, excluding doors: 1/" + d + " of " + fmt(a) + " m².") : ""; } },
+		tnset: { title: "Setbacks", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, rules 35(1)(a), 35(1)(b), 39(3)",
+			form: () => sel("k", "Building", '<option value="s">Small: up to 16 homes or 300 m² commercial</option><option value="l">Larger, up to 18.3 m tall</option><option value="h">High-rise, over 18.3 m</option>', true) +
+				num("r", "Road width in front, m", 9) + num("h", "Building height, m", 10) + num("w", "Plot width, m", 12, true),
+			run: (g) => {
+				const k = g("k", true), r = g("r"), h = g("h"), w = g("w");
+				if (!h) return "";
+				if (k === "h") {
+					const sb = h <= 30 ? 7 : Math.min(20, 7 + Math.ceil((h - 30) / 6));
+					return out(fmt(sb) + " m all round", (h <= 18.3 ? "At 18.3 m or less this is not a high-rise: choose Larger. " : "") + "7 m up to 30 m, then 1 m more for every 6 m or part, up to 20 m. Towers on one site keep the same spacing.", [["Front, sides and rear", fmt(sb) + " m"], ["Between towers", fmt(sb) + " m"]]);
+				}
+				if (k === "l") {
+					if (r < 9) return out("Road too narrow", "Buildings of this size need a road at least 9 m wide.");
+					if (h > 18.3) return out("Over 18.3 m", "Above 18.3 m the high-rise rules apply: choose High-rise.");
+					const f = r <= 18 ? 3 : r <= 30.5 ? 4.5 : 6, sr = h <= 7 ? 1 : h <= 12 ? 1.5 : h <= 16 ? 2.5 : 3;
+					return out(fmt(f) + " m front", "Front by road width, sides and rear by height. Continuous building areas: sides and rear nil.", [["Front", fmt(f) + " m"], ["Each side", fmt(sr) + " m"], ["Rear", fmt(sr) + " m"]]);
+				}
+				if (h > 12) return out("Over 12 m", "Small buildings go up to 12 m: choose Larger.");
+				if (r < 6 && h > 9) return out("Over 9 m", "On roads under 6 m wide the limit is 9 m (G+1, or stilt + 2).");
+				const f = r <= 9 ? 1.5 : r <= 18 ? 3 : r <= 30.5 ? 4.5 : 6;
+				const side = h <= 7 ? (w <= 9 ? "1 m on one side" : "1 m on both sides") : w <= 6 ? "1 m on one side" : w <= 9 ? "1.5 m on one side" : "1.5 m on both sides";
+				return out(fmt(f) + " m front", "Continuous building areas: front 1.5 m, sides and rear nil. EWS areas: front 1.0 m.", [["Front", fmt(f) + " m"], ["Side", side], ["Rear", h <= 7 ? "nil" : "1.5 m"]]);
+			} },
+		tnfsi: { title: "FSI and floor area", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, rules 35 and 39",
+			form: () => sel("k", "Building", '<option value="s">Small: up to 16 homes or 300 m² commercial</option><option value="l">Non high-rise, up to 18.3 m</option><option value="h">High-rise, over 18.3 m</option>', true) +
+				num("a", "Plot area, m²", 400) + num("r", "Road width, m", 12),
+			run: (g) => {
+				const k = g("k", true), a = g("a"), r = g("r");
+				if (!a) return "";
+				const note = "Normally permissible FSI. Premium FSI, where the authority allows it, is extra and not included.";
+				if (k === "h") {
+					if (r < 12) return out("Road too narrow", "High-rise needs a road at least 12 m wide, running 500 m (Chennai Metropolitan Area and corporations) or 250 m elsewhere.");
+					const f = r >= 18 ? 3.25 : r >= 15 ? 2.5 : 2;
+					return out(fmt(a * f, 0) + " m² built-up", "FSI " + f + " on a " + fmt(r) + " m road. " + note, [["FSI", String(f)], ["Floor area", fmt(a * f, 0) + " m²"], ["Ground coverage, 50% max.", fmt(a * 0.5, 0) + " m²"]]);
+				}
+				if (k === "l") {
+					if (r < 9) return out("Road too narrow", "Non high-rise buildings need a road at least 9 m wide.");
+					return out(fmt(a * 2, 0) + " m² built-up", "FSI 2.0, up to 18.3 m tall. " + note, [["FSI", "2.0"], ["Floor area", fmt(a * 2, 0) + " m²"], ["Height", "18.3 m max."]]);
+				}
+				return out(fmt(a * 2, 0) + " m² built-up", "FSI 2.0. " + note, [["FSI", "2.0"], ["Floor area", fmt(a * 2, 0) + " m²"], ["Height", r >= 6 ? "12 m: G+2 or stilt + 3, up to 16 homes" : "9 m: G+1 or stilt + 2, up to 8 homes"]]);
+			} },
+		tnpark: { title: "Parking spaces", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, Annexure IV, Part I",
+			form: () => sel("u", "Use", '<option value="home">Homes</option><option value="shop">Shops, supermarkets</option><option value="office">Offices</option><option value="govt">Government offices</option>', true) +
+				num("n", "Number of homes (homes only)", 12) + num("a", "Floor area of one home, or total floor area, m²", 70) +
+				sel("z", "Area", '<option value="c">Corporation or municipality</option><option value="p">Panchayat</option>', true),
+			run: (g) => {
+				const u = g("u", true), n = g("n"), a = g("a"), pan = g("z", true) === "p";
+				if (!a) return "";
+				const res = (c, t, vc, vt, why, rows) => out(fmt(c + vc, 0) + " cars · " + fmt(t + vt, 0) + " two-wheelers", why, rows.concat([["Cars", fmt(c, 0)], ["Two-wheelers", fmt(t, 0)], ["Visitors: cars", fmt(vc, 0)], ["Visitors: two-wheelers", fmt(vt, 0)]]));
+				if (u === "home") {
+					if (!n) return "";
+					const st = pan ? [50, 75, 100] : [25, 50, 75];
+					let c = 0, t = 0;
+					if (a > st[2]) c = n * Math.floor(a / st[2]);
+					else if (a > st[1]) { c = Math.ceil(n / 2); t = n; }
+					else if (a > st[0]) t = n;
+					const vis = n > 6;
+					return res(c, t, vis ? Math.round(c * 0.1) : 0, vis ? Math.round(t * 0.1) : 0,
+						fmt(n, 0) + " homes of " + fmt(a) + " m². " + (a > st[2] ? "1 car for every " + st[2] + " m² of each home (rounded down: the rule does not say “or part”). " : "") + (vis ? "Visitors: 10% more, rounded, as there are over 6 homes." : "No visitor parking up to 6 homes."), []);
+				}
+				if (u === "shop") {
+					const base = pan ? 75 : 50, k = a > base ? Math.ceil((a - base) / base) : 0;
+					return res(k, k, 0, 0, "1 car and 1 two-wheeler per " + base + " m² or part, beyond the first " + base + " m².", []);
+				}
+				const per = u === "govt" ? (a <= 500 ? 150 : 100) : 100;
+				const c = Math.ceil(a / per), t = Math.ceil(a / 25);
+				return res(c, t, Math.max(1, Math.ceil(c * 0.1)), Math.max(1, Math.ceil(t * 0.1)), "1 car per " + per + " m² and 1 two-wheeler per 25 m², or part. Visitors: 10% more, at least 1 of each.", []);
+			} },
 		ecs: { title: "Parking area", src: "NBC 2016, Part 3, cl. 10.3",
 			form: () => num("n", "Car spaces (ECS)", 20) + sel("t", "Type", '<option value="23">Open</option><option value="28">Covered, ground</option><option value="32">Basement</option>'),
 			run: (g) => { const n = g("n"), m = g("t"); return n ? out(fmt(n * m, 0) + " m²", fmt(n, 0) + " ECS × " + m + " m², circulation included.") : ""; } },
@@ -217,7 +425,10 @@
 	}
 	function renderTools() {
 		if ($("tool-list").childElementCount) return;
-		$("tool-list").innerHTML = Object.keys(CALC).map((k) => '<article class="tool"><h3>' + esc(CALC[k].title) + '</h3><p class="src">' + esc(CALC[k].src) + '</p><div class="calc-box" data-calc="' + k + '"></div></article>').join("");
+		const groups = {};
+		Object.keys(CALC).forEach((k) => { const g = CALC[k].group || "NBC 2016"; (groups[g] = groups[g] || []).push(k); });
+		$("tool-list").innerHTML = Object.keys(groups).map((g) => '<h2 class="tool-group">' + esc(g) + "</h2>" +
+			groups[g].map((k) => '<article class="tool"><h3>' + esc(CALC[k].title) + '</h3><p class="src">' + esc(CALC[k].src) + '</p><div class="calc-box" data-calc="' + k + '"></div></article>').join("")).join("");
 		$("tool-list").querySelectorAll("[data-calc]").forEach((b) => mountCalc(b, CALC[b.dataset.calc]));
 	}
 
@@ -235,12 +446,15 @@
 			'<h2 class="sh-title" id="sh-title">' + esc(s.title) + "</h2>" +
 			'<div class="sh-value num grad">' + esc(s.value) + '</div><p class="sh-sub">' + esc(s.sub) + "</p>" +
 			(fig ? '<figure class="sh-fig"><img src="' + fig + '" alt="Drawing: ' + esc(s.title) + '"><figcaption>' + (CADS[s.fig] ? "ArchXchange CAD drawing, drafted full size in mm. " : "ArchXchange drawing, not to scale. ") + "Dimensions per " + esc(cite(s)) + ".</figcaption></figure>" +
-				(CADS[s.fig] ? '<div class="cad"><div><b>CAD drawing</b><small>' + esc(CADS[s.fig]) + ' · DWG + DXF, layered, dimensioned, with title block</small></div><button type="button" class="btn sm" id="sh-cad">Download · Pro</button></div>' : "") : "") +
+				"" : "") +
 			(s.rows ? '<div class="sh-block"><span class="k">Values</span><table class="rows">' + s.rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table></div>" : "") +
 			(s.notes ? '<div class="sh-block"><span class="k">Also</span><ul class="notes">' + s.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul></div>" : "") +
 			(c ? '<div class="sh-block"><span class="k">Work it out</span><div class="calc"><b style="color:var(--text)">' + esc(c.title) + '</b><div class="calc-box" id="sh-calc"></div></div></div>' : "") +
 			'<div class="sh-block"><span class="k">Applies to</span><div class="uses">' + uses.map((u) => "<span>" + esc(u) + "</span>").join("") + "</div></div>" +
-			'<div class="sh-block"><span class="k">Cite</span><div class="cite"><span>' + esc(cite(s)) + '</span><button type="button" class="btn sm" id="sh-copy">Copy</button></div></div>' +
+			'<div class="sh-block"><span class="k">Download</span><div class="dl">' +
+				'<button type="button" class="dl-b" data-dl="sheet"><b>PDF</b><span>Standard sheet</span><small class="free">Free</small></button>' +
+				(fig && CADS[s.fig] ? '<button type="button" class="dl-b" data-dl="pro"><b>PDF</b><span>A3 drawing to scale</span><small>Solo</small></button><button type="button" class="dl-b" data-dl="pro"><b>DWG + DXF</b><span>' + esc(CADS[s.fig]) + "</span><small>Solo</small></button>" : "") + "</div></div>" +
+			'<div class="sh-block"><span class="k">Cite</span><div class="cite"><span>' + esc(cite(s)) + '</span><span class="cite-b"><button type="button" class="btn sm" id="sh-copy">Copy</button><button type="button" class="btn sm" id="sh-share">Share</button></span></div></div>' +
 			'<div class="sh-block" id="sh-save"><span class="k">Save to a project</span>' +
 			(db.projects.length ? '<div class="sh-actions"><select class="input" id="sh-proj">' + projOpts + '</select><button type="button" class="btn primary" id="sh-add"></button></div>'
 				: '<div class="sh-actions"><input class="input" id="sh-new" placeholder="Name your first project" maxlength="80"><button type="button" class="btn primary" id="sh-create">Create and save</button></div>') +
@@ -261,7 +475,16 @@
 			if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("Copied"), () => {});
 		});
 		$("sh-close").addEventListener("click", closeSheet);
-		if ($("sh-cad")) $("sh-cad").addEventListener("click", () => toast("CAD downloads come with ArchXchange Pro, launching soon."));
+			$("sheet").querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+				if (b.dataset.dl === "sheet") printBook(s.title, cite(s), [{ s: s }]);
+				else openPro("CAD and PDF drawings");
+			}));
+			$("sh-share").addEventListener("click", () => {
+				const url = location.origin + location.pathname + "#/s/" + s.id;
+				if (navigator.share) navigator.share({ title: s.title + " · ArchXchange Standards", text: s.title + ": " + s.value, url: url }).catch(() => {});
+				else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast("Link copied"), () => {});
+			});
+			viewed(s.id);
 		(saving && $("sh-new") ? $("sh-new") : $("sh-close")).focus();
 		if (!$("library").hidden && location.hash !== "#/s/" + s.id) history.replaceState(null, "", "#/s/" + s.id);
 	}
@@ -285,11 +508,15 @@
 
 	function renderProject(p) {
 		const ok = p.items.filter((x) => x.s === "ok").length, chk = p.items.filter((x) => x.s === "check").length;
-		const suggest = STANDARDS.filter((s) => s.cat !== "bylaws" && fits(s, p.type) && !p.items.some((x) => x.id === s.id));
+		const suggest = forBuilding(p.type).filter((s) => !p.items.some((x) => x.id === s.id));
+		const cadN = new Set(p.items.map((x) => byId(x.id)).filter((s) => s && CADS[s.fig]).map((s) => s.fig)).size;
 		$("project").innerHTML = '<div class="p-head"><a class="back" href="#/projects">← My projects</a><span class="k">' + esc(typeName(p.type)) + "</span><h1>" + esc(p.name) + "</h1>" +
 			'<div class="p-stats"><span><b>' + p.items.length + "</b> standards</span><span><b>" + ok + "</b> comply</span><span><b>" + chk + "</b> to check</span><span><b>" + (p.items.length - ok - chk) + '</b> to do</span></div>' +
 			'<div class="bar"><i style="width:' + (p.items.length ? 100 * ok / p.items.length : 0) + '%"></i></div>' +
-			'<div class="p-tools"><button type="button" class="btn sm" id="p-print">Print checklist</button><button type="button" class="btn sm" id="p-all">Add all ' + suggest.length + " for " + esc(typeName(p.type).toLowerCase()) + '</button><button type="button" class="btn sm" id="p-del">Delete project</button></div></div>' +
+			'<div class="p-tools">' + (p.items.length ? '<button type="button" class="btn sm primary" id="p-book">Download all · PDF</button><button type="button" class="btn sm" id="p-print">Checklist · PDF</button>' : "") +
+				(cadN ? '<button type="button" class="btn sm" id="p-cad">Drawings · DWG, DXF, PDF (' + cadN + ")</button>" : "") +
+				(suggest.length ? '<button type="button" class="btn sm" id="p-all">Add all ' + suggest.length + " for " + esc(typeName(p.type).toLowerCase()) + "</button>" : "") +
+				'<button type="button" class="btn sm" id="p-ren">Rename</button><button type="button" class="btn sm" id="p-del">Delete project</button></div></div>' +
 			'<div class="checklist">' + (p.items.length ? p.items.map((x) => {
 				const s = byId(x.id);
 				if (!s) return "";
@@ -299,8 +526,11 @@
 			}).join("") : '<div class="empty-proj">Nothing saved yet. Add the suggestions below, or save from the library.</div>') + "</div>" +
 			(suggest.length ? '<div class="suggest"><h2>Suggested for ' + esc(typeName(p.type).toLowerCase()) + ' buildings</h2><p class="sub">Tap a card to read it; the bookmark adds it here.</p><div class="grid" style="margin-top:12px">' + suggest.map((s) => card(s)).join("") + "</div></div>" : "");
 		db.active = p.id; persist();
-		$("p-print").addEventListener("click", () => window.print());
-		$("p-all").addEventListener("click", () => { suggest.forEach((s) => p.items.push({ id: s.id, s: "todo", note: "" })); persist(); renderProject(p); toast("Added " + suggest.length + " standards"); });
+			if ($("p-print")) $("p-print").addEventListener("click", () => window.print());
+			if ($("p-book")) $("p-book").addEventListener("click", () => printBook(p.name, typeName(p.type) + " · standards checklist", p.items.filter((x) => byId(x.id)).map((x) => ({ s: byId(x.id), x: x }))));
+			if ($("p-cad")) $("p-cad").addEventListener("click", () => openPro("Project drawing packs"));
+			$("p-ren").addEventListener("click", () => { const n = window.prompt("Rename the project", p.name); if (n == null || !n.trim()) return; p.name = n.trim().slice(0, 80); persist(); renderProject(p); });
+			if ($("p-all")) $("p-all").addEventListener("click", () => { suggest.forEach((s) => p.items.push({ id: s.id, s: "todo", note: "" })); persist(); renderProject(p); toast("Added " + suggest.length + " standards"); });
 		$("p-del").addEventListener("click", () => {
 			if (!window.confirm("Delete “" + p.name + "” and its checklist? This cannot be undone.")) return;
 			db.projects = db.projects.filter((q) => q.id !== p.id); if (db.active === p.id) db.active = db.projects[0] ? db.projects[0].id : null; persist(); location.hash = "#/projects";
@@ -331,16 +561,17 @@
 
 	/* ---------- Routing ---------- */
 	function show(view) {
-		["library", "bylaws", "tools", "projects", "project"].forEach((v) => { $(v).hidden = v !== view; });
-		document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.dataset.view === (view === "project" ? "projects" : view)));
+		["library", "building", "bylaws", "tools", "projects", "project"].forEach((v) => { $(v).hidden = v !== view; });
+		document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.dataset.view === (view === "project" ? "projects" : view === "building" ? "library" : view)));
 	}
 	function refresh() { route(true); }
 	function route(keepSheet) {
 		const h = location.hash || "#/";
-		const m = h.match(/^#\/(projects|p|s|bylaws|tools)?\/?([\w-]*)/) || [];
+		const m = h.match(/^#\/(projects|p|s|b|bylaws|tools)?\/?([\w-]*)/) || [];
 		if (m[1] === "projects") { show("projects"); renderProjects(); }
 		else if (m[1] === "bylaws") { show("bylaws"); renderBylaws(m[2]); }
 		else if (m[1] === "tools") { show("tools"); renderTools(); }
+		else if (m[1] === "b") { show("building"); renderBuilding(m[2]); }
 		else if (m[1] === "p" && project(m[2])) { show("project"); renderProject(project(m[2])); }
 		else { show("library"); renderLibrary(); if (m[1] === "s" && keepSheet !== true) openSheet(m[2]); }
 		if (keepSheet !== true && !/^#\/s\//.test(h) && !$("sheet").hidden) closeSheet();
@@ -348,6 +579,6 @@
 	}
 	window.addEventListener("hashchange", () => route());
 	persist();
-	renderToday();
+	renderDaily();
 	route();
 })();

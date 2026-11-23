@@ -10,14 +10,14 @@
 	"use strict";
 
 	const TYPES = [
-		{ id: "res", name: "Residential", nbc: "A" },
-		{ id: "edu", name: "Educational", nbc: "B" },
-		{ id: "health", name: "Healthcare", nbc: "C" },
-		{ id: "assembly", name: "Assembly", nbc: "D" },
-		{ id: "business", name: "Offices", nbc: "E" },
-		{ id: "retail", name: "Retail", nbc: "F" },
-		{ id: "industrial", name: "Industrial", nbc: "G" },
-		{ id: "storage", name: "Storage", nbc: "H" },
+		{ id: "res", name: "Residential", nbc: "A", eg: "Houses, flats, hostels, hotels" },
+		{ id: "edu", name: "Educational", nbc: "B", eg: "Schools, colleges, training centres" },
+		{ id: "health", name: "Healthcare", nbc: "C", eg: "Hospitals, clinics, nursing homes" },
+		{ id: "assembly", name: "Assembly", nbc: "D", eg: "Halls, auditoria, places of worship" },
+		{ id: "business", name: "Offices", nbc: "E", eg: "Offices, banks, IT parks" },
+		{ id: "retail", name: "Retail", nbc: "F", eg: "Shops, showrooms, malls" },
+		{ id: "industrial", name: "Industrial", nbc: "G", eg: "Factories, workshops" },
+		{ id: "storage", name: "Storage", nbc: "H", eg: "Warehouses, godowns, cold stores" },
 	];
 
 	const CATS = [
@@ -181,7 +181,38 @@
 	// Professionally drafted CAD sheets (DWG + DXF) for ArchXchange Pro. The files live outside this public repo.
 	const CAD = { toilet: "Accessible toilet, Type A", stair: "Stair section", ramp: "Ramp section", parking: "Car parking plan", lift: "Accessible lift plan", turning: "Wheelchair space and turning" };
 
-	const api = { TYPES: TYPES, CATS: CATS, STANDARDS: S, FIGS: FIGS, CAD: CAD };
+	// Daily check: one question a day. o[0] is the right answer; id is the standard that explains it.
+	const QUIZ = [
+		{ q: "Minimum height of a habitable room?", o: ["2.75 m", "2.4 m", "3.0 m"], id: "room-height" },
+		{ q: "Maximum stair riser in most buildings (not 1–2 family houses)?", o: ["150 mm", "190 mm", "175 mm"], id: "riser" },
+		{ q: "Minimum stair tread in most buildings?", o: ["300 mm", "250 mm", "275 mm"], id: "tread" },
+		{ q: "Most risers allowed in one flight?", o: ["12", "15", "10"], id: "risers-flight" },
+		{ q: "Minimum clear headroom over a stair?", o: ["2.2 m", "2.0 m", "2.4 m"], id: "stair-headroom" },
+		{ q: "Clear opening of an accessible door?", o: ["900 mm", "800 mm", "750 mm"], id: "door-width" },
+		{ q: "Minimum wheelchair turning circle?", o: ["1 500 mm", "1 200 mm", "1 000 mm"], id: "turning" },
+		{ q: "Steepest ramp for a rise up to 750 mm?", o: ["1:12", "1:10", "1:8"], id: "ramp" },
+		{ q: "Minimum car size of an accessible lift?", o: ["1 500 × 1 500 mm", "1 000 × 1 000 mm", "1 200 × 1 200 mm"], id: "lift" },
+		{ q: "Area per car space (ECS) for open parking, circulation included?", o: ["23 m²", "28 m²", "32 m²"], id: "ecs" },
+		{ q: "With a sump and an overhead tank, what share of a day's water goes in the sump?", o: ["66.6%", "50%", "33.3%"], id: "tanks" },
+		{ q: "Minimum classroom ceiling height?", o: ["3.6 m", "3.0 m", "2.75 m"], id: "edu-height" },
+		{ q: "Headroom under beams and eaves, minimum?", o: ["2.4 m", "2.2 m", "2.1 m"], id: "headroom-beam" },
+		{ q: "Tamil Nadu: front setback of a small building on a road up to 9 m?", o: ["1.5 m", "3.0 m", "1.0 m"], id: "tn-front" },
+		{ q: "Tamil Nadu: setback all round a high-rise up to 30 m tall?", o: ["7 m", "6 m", "9 m"], id: "tn-hr-setback" },
+		{ q: "Tamil Nadu: car parking stall size?", o: ["2.5 × 5.0 m", "2.75 × 5.0 m", "2.5 × 4.5 m"], id: "tn-park-std" },
+		{ q: "Tamil Nadu: high-rise FSI on an 18 m road?", o: ["3.25", "2.5", "2.0"], id: "tn-hr" },
+		{ q: "Tamil Nadu: how much extra parking for visitors in flats of more than 6 homes?", o: ["10%", "5%", "20%"], id: "tn-park-res" },
+	];
+
+	// What's new, newest first. Add a line whenever content changes; people see it on their next visit.
+	const UPDATES = [
+		{ d: "2026-11-23", t: "Calculators on the Tamil Nadu rules: setbacks, FSI and parking", id: "tn-front" },
+		{ d: "2026-11-23", t: "New rule: Tamil Nadu parking for shops and offices", id: "tn-park-com" },
+		{ d: "2026-11-23", t: "Drawings redrafted, with A3 PDF sheets to scale", id: "acc-toilet" },
+		{ d: "2026-11-23", t: "Tamil Nadu building rules (TNCDBR 2019)", id: "tn-hr" },
+		{ d: "2026-11-23", t: "Calculators for water tanks and toilets", id: "tanks" },
+	];
+
+	const api = { TYPES: TYPES, CATS: CATS, STANDARDS: S, FIGS: FIGS, CAD: CAD, QUIZ: QUIZ, UPDATES: UPDATES };
 	if (typeof module !== "undefined" && module.exports) module.exports = api;
 	else root.AXS = api;
 })(this);
