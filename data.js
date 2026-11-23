@@ -27,7 +27,8 @@
 		{ id: "light", name: "Light and air", blurb: "Window and ventilator area by climate" },
 		{ id: "fire", name: "Fire and exits", blurb: "Occupant load, exit widths, travel distance" },
 		{ id: "parking", name: "Parking", blurb: "Car, two-wheeler and cycle spaces, area per ECS" },
-		{ id: "water", name: "Water demand", blurb: "Litres per head per day, by building type" },
+		{ id: "water", name: "Water and tanks", blurb: "Litres per head per day, sump and overhead tank sizes" },
+		{ id: "sanitary", name: "Toilets", blurb: "How many WCs, urinals and basins, by building type" },
 		{ id: "planning", name: "Planning norms", blurb: "Schools, colleges and hospitals per population" },
 	];
 
@@ -136,6 +137,30 @@
 				["Cinemas, theatres", "15 per seat"], ["Factories with bathrooms / without", "45 / 30 per head"], ["Clubhouse", "45 per head"], ["Stadiums", "10 per head"], ["Airports", "70 per head"], ["Visitors", "15 per head"]],
 			notes: ["Hotel and hospital figures exclude laundry and kitchen."], uses: ["all"], src: [NBC9, "cl. 4.1.2, Table 1"], tags: "water demand office school hospital hotel restaurant cinema factory lpcd", calc: "water" },
 
+		{ id: "tanks", cat: "water", title: "Water storage tanks", value: "66.6% + 33.3%", sub: "of a day's demand: sump plus overhead tank",
+			rows: [["Sump and overhead tank together", "Sump 66.6%, OHT 33.3% of one day"], ["Overhead tank only", "33.3% to 50% of one day"], ["Sump only", "50% to 150% of one day"]],
+			notes: ["With recycled water for flushing: one day's flushing demand in the sump or treatment tank, half a day in the overhead tank.", "Storage for fire fighting is extra, per Part 4."],
+			uses: ["all"], src: [NBC9, "cl. 4.4.10"], tags: "water tank sump overhead tank oht ugt storage capacity litres", calc: "tank" },
+
+		/* ---------- Toilets ---------- */
+		{ id: "wc-home", cat: "sanitary", title: "Toilets in a house or flat", value: "1 + 1", sub: "a bathroom and a WC in each dwelling",
+			rows: [["Bathroom with tap and floor trap", "1"], ["WC with flushing and ablution tap", "1"], ["Kitchen sink or wash place", "1"]],
+			notes: ["Where there is only one WC, keep the bath and WC separate if possible.", "Dwellings without their own toilets: 1 WC and 1 bath for every 2 tenements."],
+			uses: ["res"], src: [NBC9, "cl. 4.2.4"], tags: "toilets required number of toilets wc bathroom house flat apartment fixtures", calc: "toilets" },
+		{ id: "wc-office", cat: "sanitary", title: "Toilets in offices", value: "1 per 25", sub: "WC for men; 1 per 15 for women",
+			rows: [["WC, men", "1 per 25"], ["WC, women", "1 per 15"], ["Urinals", "none up to 6 men, then 1 for 7–20, 2 for 21–45, 3 for 46–70, 4 for 71–100; +3% to 200, +2.5% beyond"], ["Wash basins", "1 per 25"], ["Drinking water", "1 per 100"], ["Cleaner's sink", "1 per floor"]],
+			uses: ["business"], src: [NBC9, "Table 1"], tags: "toilets required number of toilets office wc urinal wash basin fixtures", calc: "toilets" },
+		{ id: "wc-school", cat: "sanitary", title: "Toilets in schools", value: "1 per 40", sub: "WC for boys in day schools; 1 per 25 for girls",
+			rows: [["Nursery: WC and basin", "1 per 15 pupils"], ["Day school: WC boys / girls", "1 per 40 / 1 per 25"], ["Day school: urinals, boys", "1 per 20"], ["Day school: basins boys / girls", "1 per 60 / 1 per 40"],
+				["Residential: WC boys / girls", "1 per 8 / 1 per 6"], ["Residential: urinals, boys", "1 per 25"], ["Residential: basins boys / girls", "1 per 8 / 1 per 6"]],
+			notes: ["One water tap with drainage per 50 people near the WCs and urinals."], uses: ["edu"], src: [NBC9, "Table 11"], tags: "toilets required number of toilets school college pupils students wc urinal fixtures", calc: "toilets" },
+		{ id: "wc-restaurant", cat: "sanitary", title: "Toilets in restaurants", value: "1 per 50", sub: "seats, WC for men; 2 per 50 seats for women",
+			rows: [["Diners: WC, men / women", "1 / 2 per 50 seats, up to 200 seats"], ["Diners: urinals", "1 per 50"], ["Wash basins", "1 per WC"], ["Staff WCs, men", "1 up to 15, 2 for 16–35, 3 for 36–65, 4 for 66–100"], ["Staff WCs, women", "1 up to 12, 2 for 13–25, 3 for 26–40, 4 for 41–57, 5 for 58–77, 6 for 78–100"]],
+			uses: ["assembly", "retail"], src: [NBC9, "Table 10"], tags: "toilets required restaurant cafe dining seats wc urinal fixtures", calc: "toilets" },
+		{ id: "wc-mall", cat: "sanitary", title: "Toilets in shops and malls", value: "1 per 50", sub: "visitors, WC for each of men and women, at least 2",
+			rows: [["Visitors: WC, men / women", "1 per 50 each, at least 2"], ["Visitors: urinals", "1 per 50"], ["Visitors: wash basins", "1 per 50, at least 2"], ["Staff WCs, men", "1 up to 15, 2 for 16–35, 3 for 36–65, 4 for 66–100"], ["Staff WCs, women", "1 up to 12, 2 for 13–25, 3 for 26–40, 4 for 41–57, 5 for 58–77, 6 for 78–100"]],
+			uses: ["retail"], src: [NBC9, "Table 15"], tags: "toilets required mall shop retail showroom visitors wc urinal fixtures", calc: "toilets" },
+
 		/* ---------- Planning norms ---------- */
 		{ id: "schools", cat: "planning", title: "Schools per population", value: "0.40 ha", sub: "primary school, per 5 000 people",
 			rows: [["Nursery / pre-primary", "0.08 ha per 2 500 people"], ["Primary (I–V), 500 students", "0.40 ha per 5 000; playfield at least 18 × 36 m"], ["Senior secondary (VI–XII), 1 000 students", "1.80 ha per 7 500; playfield at least 68 × 126 m"],
@@ -153,7 +178,10 @@
 	// Drawings in figs/, made for ArchXchange in VectorCraft (original; nothing traced from a code or book).
 	const FIGS = ["stair", "ramp", "parking", "toilet", "turning", "lift", "window"];
 
-	const api = { TYPES: TYPES, CATS: CATS, STANDARDS: S, FIGS: FIGS };
+	// Professionally drafted CAD sheets (DWG + DXF) for ArchXchange Pro. The files live outside this public repo.
+	const CAD = { toilet: "Accessible toilet, Type A", stair: "Stair section", ramp: "Ramp section", parking: "Car parking plan", lift: "Accessible lift plan", turning: "Wheelchair space and turning" };
+
+	const api = { TYPES: TYPES, CATS: CATS, STANDARDS: S, FIGS: FIGS, CAD: CAD };
 	if (typeof module !== "undefined" && module.exports) module.exports = api;
 	else root.AXS = api;
 })(this);

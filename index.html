@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Standards · ArchXchange</title>
-<meta name="description" content="Indian building standards from NBC 2016 and URDPFI in plain words, with the clause to cite. Search, save to your projects, and check as you design.">
+<meta name="description" content="Indian building standards and state building rules in plain words, with the clause to cite. Search, calculate tanks, toilets and exits, and save to your projects.">
 <meta name="theme-color" content="#08090C">
 <link rel="icon" href="ax-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,8 +19,10 @@
 	<div class="wrap top-in">
 		<a class="brand" href="#/"><img src="ax-mark.svg" alt="" width="26" height="26"><span>ARCH<b>X</b>CHANGE</span><em>Standards</em></a>
 		<nav class="tabs" aria-label="Sections">
-			<a href="#/" data-view="library">Library</a>
-			<a href="#/projects" data-view="projects">My projects <i id="proj-count"></i></a>
+			<a href="#/" data-view="library"><span class="ico">⌕</span><span>Library</span></a>
+			<a href="#/bylaws" data-view="bylaws"><span class="ico">§</span><span>Bylaws</span></a>
+			<a href="#/tools" data-view="tools"><span class="ico">∑</span><span>Calculators</span></a>
+			<a href="#/projects" data-view="projects"><span class="ico">▤</span><span>Projects</span><i id="proj-count"></i></a>
 		</nav>
 	</div>
 </header>
@@ -30,35 +32,42 @@
 	<section id="library" class="view">
 		<div class="hero">
 			<h1>Every standard.<br><span class="grad">One search away.</span></h1>
-			<p>Indian building standards from the National Building Code 2016 and URDPFI, in plain words, with the clause to cite. Save them to your projects and check as you design.</p>
-			<div class="search">
-				<span class="search-ico" aria-hidden="true">⌕</span>
-				<input id="q" type="search" placeholder="Search: riser, ramp, kitchen size, parking, school land…" autocomplete="off" enterkeyhint="search" aria-label="Search standards">
-				<kbd class="hide-sm">/</kbd>
-			</div>
+			<p>NBC 2016, URDPFI and your state's building rules in plain words, with the clause to cite.</p>
+			<form class="search" id="search" role="search" autocomplete="off">
+				<input id="q" type="search" placeholder="Riser, ramp, setback, parking, toilets…" enterkeyhint="search" aria-label="Search standards and bylaws">
+				<button type="submit" class="search-btn" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="hide-sm">Search</span></button>
+			</form>
 			<div class="chips" id="popular"></div>
 		</div>
 
-		<div class="today" id="today"></div>
-
-		<div class="filters">
-			<div class="filter-row">
-				<span class="k">Building</span>
-				<div class="seg" id="types" role="radiogroup" aria-label="Building type"></div>
-			</div>
-			<div class="cats" id="cats"></div>
-		</div>
-
-		<div class="results-head"><h2 id="results-title">All standards</h2><span class="count" id="count"></span></div>
+		<div class="results-head" id="results-head"><h2 id="results-title">All standards</h2><span class="count" id="count"></span></div>
 		<div class="grid" id="results"></div>
-		<p class="empty" id="none" hidden>Nothing matches. Try a simpler word, like “stair”, “door” or “water”.</p>
+		<p class="empty" id="none" hidden>Nothing matches. Try a simpler word, like “stair”, “setback” or “water”.</p>
+
+		<div id="browse">
+			<div class="today" id="today"></div>
+			<div class="filters">
+				<div class="filter-row">
+					<span class="k">Building</span>
+					<div class="seg" id="types" role="radiogroup" aria-label="Building type"></div>
+				</div>
+				<div class="cats" id="cats"></div>
+			</div>
+		</div>
+	</section>
+
+	<!-- State bylaws -->
+	<section id="bylaws" class="view" hidden></section>
+
+	<!-- Calculators -->
+	<section id="tools" class="view" hidden>
+		<div class="page-head"><h1>Calculators</h1><p class="sub">Size tanks, toilets, exits, ramps, windows and parking from the code, with the clause behind each figure.</p></div>
+		<div class="tools" id="tool-list"></div>
 	</section>
 
 	<!-- Projects -->
 	<section id="projects" class="view" hidden>
-		<div class="page-head">
-			<div><h1>My projects</h1><p class="sub">Save the standards each project must meet, tick them off as you design, and print a checklist.</p></div>
-		</div>
+		<div class="page-head"><h1>My projects</h1><p class="sub">Save the standards each project must meet, tick them off as you design, and print a checklist.</p></div>
 		<form class="new-proj" id="new-proj" autocomplete="off">
 			<input class="input" id="np-name" placeholder="Project name, e.g. Residence at Anna Nagar" required maxlength="80" aria-label="Project name">
 			<select class="input" id="np-type" aria-label="Building type"></select>
@@ -72,7 +81,7 @@
 </main>
 
 <footer class="foot wrap">
-	<p><b>Sources.</b> National Building Code of India 2016 (BIS): Part 3 with Annex B, Part 4, Part 9. URDPFI Guidelines 2014, Vol. I (Ministry of Urban Development). Values are summarised in our own words with the clause to cite; read the code itself for the full text and exceptions. Local building bye-laws and the latest amendments prevail.</p>
+	<p><b>Sources.</b> National Building Code of India 2016 (BIS): Parts 3 (with Annex B), 4 and 9. URDPFI Guidelines 2014, Vol. I. State building rules as named on each rule. Everything is summarised in our own words with the clause to cite; read the source for the full text and exceptions. Local amendments and your authority's decision prevail.</p>
 	<p class="brandline">ArchXchange · archxchange.in</p>
 </footer>
 
@@ -82,6 +91,7 @@
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="data.js"></script>
+<script src="bylaws.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

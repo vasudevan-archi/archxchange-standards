@@ -38,22 +38,44 @@ button { font: inherit; color: inherit; }
 .brand em { font-style: normal; letter-spacing: .02em; font-weight: 500; color: var(--text-2); padding-left: 10px; border-left: 1px solid var(--line-2); }
 @media (max-width: 420px) { .brand > span { display: none; } }
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0,0,0,.3); }
-.tabs a { text-decoration: none; font-size: 14px; font-weight: 600; padding: 7px 14px; border-radius: 999px; color: var(--text-2); white-space: nowrap; }
+.tabs a { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 14px; font-weight: 600; padding: 7px 14px; border-radius: 999px; color: var(--text-2); white-space: nowrap; }
+.tabs a .ico { font-size: 15px; line-height: 1; opacity: .8; }
 .tabs a.on { background: var(--grad); color: #1a1208; }
-.tabs a i { font-style: normal; font-family: var(--mono); font-size: 12px; margin-left: 4px; opacity: .8; }
+.tabs a i { font-style: normal; font-family: var(--mono); font-size: 11px; min-width: 18px; text-align: center; padding: 1px 5px; border-radius: 999px; background: rgba(255,255,255,.12); }
+.tabs a i:empty { display: none; }
+/* Phones: the sections move to a bottom tab bar, like an app */
+@media (max-width: 760px) {
+	.tabs { position: fixed; z-index: 30; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); justify-content: space-around; border-radius: 20px; padding: 6px;
+		background: rgba(14,16,21,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-color: var(--line-2); box-shadow: 0 20px 50px -20px #000; }
+	.tabs a { flex: 1; flex-direction: column; gap: 2px; padding: 7px 4px; font-size: 11.5px; border-radius: 14px; position: relative; }
+	.tabs a .ico { font-size: 18px; }
+	.tabs a i { position: absolute; top: 2px; right: 18%; }
+	body { padding-bottom: 96px; }
+	/* A blurred header would trap the fixed tab bar inside it, so phones get a solid header */
+	.top { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(8,9,12,.97); }
+	.top-in { height: 54px; }
+}
 
 /* Hero and search */
+#library { display: flex; flex-direction: column; }
+#library .hero { order: 0; } #browse { order: 1; } #results-head { order: 2; } #results { order: 3; } #none { order: 4; }
+.searching #browse { display: none; }
+.search { display: flex; gap: 8px; margin-top: 8px; max-width: 760px; padding: 6px; border-radius: 20px; border: 1px solid var(--line-2); background: rgba(10,11,15,.88);
+	box-shadow: 0 20px 60px -30px rgba(255,122,61,.55), inset 0 1px 0 rgba(255,255,255,.05); }
+.search:focus-within { border-color: var(--a2); box-shadow: 0 0 0 4px rgba(255,196,107,.14), 0 20px 60px -30px rgba(255,122,61,.7); }
+.search input { flex: 1; min-width: 0; height: 50px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 17px var(--font); }
+.search input:focus { outline: none; }
+.search input::placeholder { color: var(--text-3); }
+.search-btn { display: flex; align-items: center; gap: 8px; height: 50px; padding: 0 20px; border: 0; border-radius: 14px; background: var(--grad); color: #1a1208; font-weight: 700; cursor: pointer; }
+.search-btn svg { width: 20px; height: 20px; }
+@media (max-width: 520px) { .search-btn { padding: 0 15px; } .search input { font-size: 16px; } }
+
 .hero { padding: 40px 0 22px; display: grid; gap: 14px; }
+@media (max-width: 520px) { .hero { padding: 24px 0 16px; gap: 12px; } .hero p { font-size: 15px; } .cat small { display: none; } .cat { padding: 12px; } .sheet { max-height: 88vh; } }
 .hero h1 { font-size: clamp(36px, 8.5vw, 68px); font-weight: 700; }
 .hero p { max-width: 64ch; font-size: 16.5px; }
-.search { position: relative; margin-top: 8px; max-width: 760px; }
-.search input { width: 100%; height: 62px; padding: 0 56px 0 52px; border-radius: 18px; border: 1px solid var(--line-2); background: rgba(10,11,15,.85); color: var(--text); font: 17px var(--font);
-	box-shadow: 0 20px 60px -30px rgba(255,122,61,.55), inset 0 1px 0 rgba(255,255,255,.05); }
-.search input::placeholder { color: var(--text-3); }
-.search input:focus { outline: none; border-color: var(--a2); box-shadow: 0 0 0 4px rgba(255,196,107,.14), 0 20px 60px -30px rgba(255,122,61,.7); }
-.search-ico { position: absolute; left: 20px; top: 50%; transform: translateY(-52%); font-size: 22px; color: var(--a2); }
-.search kbd { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font: 12px var(--mono); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line-2); color: var(--text-3); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 760px) { .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--gut)); padding: 0 var(--gut); } .chips::-webkit-scrollbar { display: none; } .chip { flex: none; } }
 .chip { border: 1px solid var(--line); background: var(--glass); color: var(--text-2); padding: 6px 12px; border-radius: 999px; font-size: 13.5px; cursor: pointer; }
 .chip:hover { border-color: var(--line-2); color: var(--text); }
 
@@ -134,6 +156,10 @@ mark { background: rgba(255,196,107,.22); color: var(--text); border-radius: 3px
 .sh-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 20px; }
 .caveat { margin-top: 16px; font-size: 12.5px; color: var(--text-3); }
 
+.cad { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,196,107,.35); background: rgba(255,196,107,.06); }
+.cad b { color: var(--text); font-size: 14.5px; display: block; }
+.cad small { font-size: 12.5px; color: var(--text-3); }
+
 /* Calculators */
 .calc { padding: 14px; border-radius: 14px; border: 1px solid rgba(255,196,107,.35); background: linear-gradient(160deg, rgba(255,122,61,.10), rgba(255,196,107,.02) 60%); display: grid; gap: 10px; }
 .calc-in { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -186,6 +212,32 @@ select.input option { background: var(--bg-2); }
 .item-note { grid-column: 1 / -1; height: 38px; font-size: 13.5px; }
 .item-x { justify-self: end; background: none; border: 0; color: var(--text-3); font-size: 12.5px; cursor: pointer; }
 .suggest h2 { font-size: 20px; margin: 8px 0 4px; }
+
+/* Calculators page */
+.tools { display: grid; gap: 12px; margin-bottom: 30px; }
+@media (min-width: 900px) { .tools { grid-template-columns: 1fr 1fr; } }
+.tool { display: grid; gap: 12px; padding: 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); }
+.tool h3 { font-size: 18px; }
+.tool .src { font: 11.5px var(--mono); color: var(--text-3); }
+.tool .calc-in { grid-template-columns: 1fr 1fr; }
+.tool .calc-in label.wide { grid-column: 1 / -1; }
+.tool .calc-out { padding: 14px; border-radius: 14px; background: linear-gradient(160deg, rgba(255,122,61,.12), rgba(255,196,107,.03) 60%); border: 1px solid rgba(255,196,107,.3); }
+.out-rows { display: grid; gap: 4px; margin-top: 6px; font-size: 13.5px; }
+.out-rows div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding: 5px 0; }
+.out-rows b { font-size: 14px !important; font-family: var(--mono); color: var(--text); }
+
+/* Bylaws */
+.states { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; margin-bottom: 14px; }
+.states::-webkit-scrollbar { display: none; }
+.state { text-decoration: none; flex: none; display: grid; gap: 2px; text-align: left; padding: 12px 14px; min-width: 150px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); cursor: pointer; }
+.state b { color: var(--text); font-size: 15px; }
+.state small { font-size: 12px; color: var(--text-3); }
+.state.on { border: 1px solid transparent; background: linear-gradient(var(--bg-2), var(--bg-2)) padding-box, var(--grad) border-box; }
+.doc { display: grid; gap: 8px; padding: 16px; border-radius: 16px; border: 1px solid var(--line-2); background: rgba(255,255,255,.03); margin-bottom: 14px; }
+.doc h2 { font-size: 20px; }
+.doc .meta { font-size: 13px; color: var(--text-3); }
+.doc a { color: var(--a2); font-weight: 600; text-decoration: none; }
+.soon { padding: 22px; border-radius: 16px; border: 1px dashed var(--line-2); color: var(--text-3); }
 
 /* Footer and toast */
 .foot { margin-top: 50px; padding-top: 22px; padding-bottom: 40px; border-top: 1px solid var(--line); font-size: 13px; color: var(--text-3); display: grid; gap: 10px; }
