@@ -205,6 +205,7 @@
 
 	// What's new, newest first. Add a line whenever content changes; people see it on their next visit.
 	const UPDATES = [
+		{ d: "2026-11-24", t: "Tamil Nadu rules for schools and colleges: setbacks, classrooms, stairs, parking", id: "tn-school" },
 		{ d: "2026-11-24", t: "18 new drawings: every drawable standard and all the Tamil Nadu rules", id: "tn-front" },
 		{ d: "2026-11-23", t: "Calculators on the Tamil Nadu rules: setbacks, FSI and parking", id: "tn-front" },
 		{ d: "2026-11-23", t: "New rule: Tamil Nadu parking for shops and offices", id: "tn-park-com" },

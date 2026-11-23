@@ -36,7 +36,7 @@
 			uses: ALL, calc: "tnset", src: [TN, "rule 35(1)(a)"], tags: "rear setback back set back tamil nadu tncdbr" },
 		{ id: "tn-large-setbacks", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Setbacks, larger buildings up to 18.3 m", value: "3.0–6.0 m", sub: "front, by road width; more than 16 homes or 300 m² commercial",
 			rows: [["Front: road 9–18 m", "3.0 m"], ["Front: road 18–30.5 m", "4.5 m"], ["Front: road over 30.5 m", "6.0 m"], ["Side and rear: height up to 7 m", "1.0 m"], ["Side and rear: 7–12 m", "1.5 m"], ["Side and rear: 12–16 m", "2.5 m"], ["Side and rear: 16–18.3 m", "3.0 m"]],
-			notes: ["Side and rear setbacks are nil in continuous building areas."], uses: ALL, calc: "tnset", src: [TN, "rule 35(1)(b)"], tags: "setback apartment flats commercial building side rear front tamil nadu tncdbr" },
+			notes: ["Side and rear setbacks are nil in continuous building areas."], uses: ["res", "health", "assembly", "business", "retail", "industrial", "storage"], calc: "tnset", src: [TN, "rule 35(1)(b)"], tags: "setback apartment flats commercial building side rear front tamil nadu tncdbr" },
 
 		/* ---------- Tamil Nadu: height and FSI ---------- */
 		{ id: "tn-small-height", fig: "tn-heights", state: "tn", topic: "Height and FSI", title: "Small buildings: height and FSI", value: "12 m · FSI 2.0", sub: "Ground + 2 or stilt + 3 floors; up to 16 homes or 300 m² commercial",
@@ -44,7 +44,7 @@
 			uses: ALL, calc: "tnfsi", src: [TN, "rule 35(1)(a)"], tags: "fsi far floor space index height floors g+2 stilt house tamil nadu tncdbr" },
 		{ id: "tn-nhr", fig: "tn-heights", state: "tn", topic: "Height and FSI", title: "Non high-rise: height, road and FSI", value: "18.3 m · FSI 2.0", sub: "more than 16 homes or 300 m² commercial; road at least 9 m",
 			notes: ["Water tanks, chimneys and ornamental features (flag masts, gopurams, minarets) may rise to 30.5 m.", "In continuous building areas, keep a 1 m internal passage from rear to front at ground level."],
-			uses: ALL, calc: "tnfsi", src: [TN, "rule 35(1)(b), 35 notes"], tags: "non high rise 18.3 m height fsi road width apartment tamil nadu tncdbr" },
+			uses: ["res", "health", "assembly", "business", "retail", "industrial", "storage"], calc: "tnfsi", src: [TN, "rule 35(1)(b), 35 notes"], tags: "non high rise 18.3 m height fsi road width apartment tamil nadu tncdbr" },
 
 		/* ---------- Tamil Nadu: high-rise ---------- */
 		{ id: "tn-hr", fig: "tn-fsi", state: "tn", topic: "High-rise", title: "High-rise: road width and FSI", value: "FSI 2.0–3.25", sub: "by road width: 12 m, 15 m or 18 m; coverage 50%",
@@ -68,6 +68,27 @@
 			rows: [["Shops, corporations and municipalities", "1 car + 1 two-wheeler per 50 m² or part, beyond the first 50 m²"], ["Shops, panchayats", "the same per 75 m², beyond the first 75 m²"], ["Offices (other than government)", "1 car per 100 m² + 1 two-wheeler per 25 m², or part"],
 				["Government offices up to 500 m²", "1 car per 150 m² + 1 two-wheeler per 25 m², or part"], ["Government offices over 500 m²", "1 car per 100 m² + 1 two-wheeler per 25 m², or part"], ["Visitors, offices", "+10%, at least 1 car and 1 two-wheeler"]],
 			uses: ["retail", "business"], calc: "tnpark", src: [TN, "Annexure IV, Part I (2), (4), (5)"], tags: "parking shop shopping centre supermarket office commercial government tamil nadu tncdbr" },
+		{ id: "tn-inst", state: "tn", topic: "Schools and institutions", title: "Schools and institutions: road, height, FSI", value: "18.3 m · FSI 2.0", sub: "road 7.2 m for schools, 9 m for colleges and other institutions",
+			rows: [["Road, schools up to higher secondary and ITIs", "7.2 m min."], ["Road, colleges and other institutions", "9 m min."], ["Road, continuous building areas", "7.2 m min."], ["Maximum height", "18.3 m"], ["Normally permissible FSI", "2.0"]],
+			notes: ["Covers nursery and primary schools over 300 m², secondary schools, colleges, technical and research institutes, student hostels and dormitories.", "Nursery and primary schools up to 300 m² follow the small-building rules (rule 35).", "Water tanks and ornamental features may rise to 30.5 m."],
+			uses: ["edu"], src: [TN, "rule 37"], tags: "school college institution institutional educational height fsi road width tamil nadu tncdbr" },
+		{ id: "tn-inst-setback", state: "tn", topic: "Schools and institutions", title: "Setbacks, schools and institutions", value: "6 m", sub: "front 6 m; sides and rear 6 m, or 2 m for schools in continuous building areas",
+			rows: [["Front, all areas", "6 m"], ["Side and rear, other areas", "6 m"], ["Side and rear, continuous building areas", "nil; 2 m for schools"]],
+			notes: ["Measured from the street alignment or new road line where one is prescribed, otherwise from the property boundary.", "Allowed in the setbacks: gate pillars and incidental structures up to 4 m high, such as a watchman booth, cycle stand, kitchen and toilets.", "In continuous building areas, keep a 1 m internal passage from rear to front at ground level."],
+			uses: ["edu"], src: [TN, "rule 37"], tags: "school college setback front side rear institution educational tamil nadu tncdbr" },
+		{ id: "tn-school", state: "tn", topic: "Schools and institutions", title: "Schools: classrooms, stairs and exits", value: "6 × 6 m", sub: "classroom for up to 40 students, 3 m headroom",
+			rows: [["Classroom", "6 × 6 m min. for up to 40 students"], ["Classroom headroom", "3 m min."], ["Doors and windows", "at least 2 of each per classroom, high fire resistance"], ["Walls", "230 mm min."], ["Staircases", "one for every 6 classrooms, continuous to the terrace"], ["Stair width and mid-landing", "1.6 m min."], ["Travel to a stair from upper floors", "22.6 m max."], ["Stair exit door at ground", "2.0 × 2.1 m min., opening to open space"], ["Covered verandah in front of classrooms", "1.8 m min."], ["Terrace parapet", "1.0 m high, 230 mm thick"]],
+			notes: ["Site: no opening directly onto national or state highways; away from water bodies, forests, garbage dumps, noisy roads and factories.", "Fire: enough extinguishers, a separate fire-fighting tank or sump, non-combustible construction.", "Any kitchen away from classrooms and student toilets."],
+			uses: ["edu"], src: [TN, "rule 37, Annexure XV"], tags: "school classroom class room size stair exit travel distance verandah parapet fire safety tamil nadu tncdbr" },
+		{ id: "tn-edu-widths", state: "tn", topic: "Schools and institutions", title: "Stair and corridor widths, educational", value: "2.0 m", sub: "stair and corridor in educational buildings",
+			rows: [["Stair, educational institutions", "2.00 m"], ["Corridor or verandah, schools, colleges, research", "2.0 m"], ["School stair, Annexure XV", "1.6 m min."], ["School verandah in front of classrooms, Annexure XV", "1.8 m min."], ["Tread", "300 mm min. without nosing"]],
+			notes: ["Both rules apply to schools; the general widths (2.0 m) are the larger."],
+			uses: ["edu"], src: [TN, "rule 42, rule 52(17), Annexure XV"], tags: "stair staircase corridor verandah width school college educational tamil nadu tncdbr" },
+		{ id: "tn-park-edu", state: "tn", topic: "Parking", title: "Parking for schools and colleges", value: "1 car per 100 m²", sub: "of classroom area: private schools in corporations and municipalities, and colleges",
+			rows: [["Government or local body schools, corporations", "1 car / 500 m² + 1 two-wheeler / 50 m² + 1 cycle / 10 m²"], ["Government schools, panchayats", "1 two-wheeler / 50 m² + 1 cycle / 5 m²"], ["Private schools, corporations", "1 car / 100 m² + 1 two-wheeler / 50 m² + 1 cycle / 10 m²"], ["Private schools, panchayats", "1 car / 300 m² + 1 two-wheeler / 50 m² + 1 cycle / 5 m²"],
+				["Colleges", "1 car / 100 m² + 1 two-wheeler / 50 m²"], ["Tutorial colleges", "1 car / 200 m² + 1 two-wheeler / 50 m²"], ["Training institutes (floor area)", "1 car / 100 m² + 1 two-wheeler / 30 m²"], ["Hostels", "1 two-wheeler per 10 rooms"]],
+			notes: ["Areas are classroom area, or part thereof.", "Schools: half the car spaces go in front, along the road, as a drop-off and pick-up bay."],
+			uses: ["edu"], src: [TN, "Annexure IV, Part I (11), (13)"], tags: "parking school college classroom cycle two wheeler hostel drop off tamil nadu tncdbr" },
 	].map(function (r) { r.cat = "bylaws"; return r; });
 
 	const api = { STATES: STATES, RULES: R };
