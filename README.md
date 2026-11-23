@@ -4,7 +4,7 @@ A searchable library of Indian building standards and state building rules, with
 
 **Live:** https://vasudevan-archi.github.io/archxchange-standards/ (GitHub Pages, repository `vasudevan-archi/archxchange-standards`, public).
 
-To publish a change, commit and push from this folder. Pages rebuilds in about a minute.
+To publish a change, raise the `?v=` number on the CSS and script links in `index.html` (so browsers fetch the new files instead of cached ones), then commit and push from this folder. Pages rebuilds in about a minute.
 
 ```
 git add -A
