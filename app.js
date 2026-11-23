@@ -9,7 +9,7 @@
 	const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 	const byId = (id) => STANDARDS.find((s) => s.id === id);
 	const catName = (id) => id === "bylaws" ? "State bylaws" : (CATS.find((c) => c.id === id) || {}).name || "";
-	const label = (s) => s.cat === "bylaws" ? (stateOf(s.state) || {}).name + " · " + s.topic : catName(s.cat);
+	const label = (s) => s.cat === "bylaws" ? (stateOf(s.state) || {}).name + " · " + s.topic : catName(s.cat) + (s.group ? " · " + s.group : "");
 	const typeName = (id) => (TYPES.find((t) => t.id === id) || {}).name || "Any building";
 	const cite = (s) => s.src.join(", ");
 	const fits = (s, type) => !type || s.uses.indexOf("all") > -1 || s.uses.indexOf(type) > -1;
@@ -95,7 +95,7 @@
 		const ws = words(state.q);
 		const list = STANDARDS.map((s) => ({ s: s, sc: score(s, ws) }))
 			.filter((x) => x.sc > 0 && (!state.cat || x.s.cat === state.cat) && (ws.length || x.s.cat !== "bylaws"))
-			.sort((a, b) => b.sc - a.sc);
+			.sort((a, b) => b.sc - a.sc || (a.s.group || "").localeCompare(b.s.group || ""));
 		$("library").classList.toggle("searching", ws.length > 0 || !!state.cat);
 		$("results").innerHTML = list.map((x) => card(x.s, ws)).join("");
 		$("none").hidden = list.length > 0;
@@ -159,10 +159,11 @@
 	$("state-pick").addEventListener("change", (e) => { prefs.state = e.target.value; keep(PREF, prefs); renderHome(); });
 
 	/* ---------- One building: everything it needs, in design order ---------- */
-	const STAGES = [["site", "Site and bylaws"], ["spaces", "Rooms and spaces"], ["stairs", "Stairs and parapets"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and exits"], ["services", "Water and toilets"], ["parking", "Parking"]];
-	const STAGE_OF = { planning: "site", rooms: "spaces", water: "services", sanitary: "services" };
-	const stageOf = (s) => s.cat === "bylaws" ? (s.topic === "Parking" ? "parking" : "site") : STAGE_OF[s.cat] || s.cat;
-	const srcTag = (s) => s.cat === "bylaws" ? s.state.toUpperCase() : s.src[0].split(" ")[0];
+	const STAGES = [["site", "Site and bylaws"], ["spaces", "Rooms and spaces"], ["stairs", "Stairs and parapets"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and exits"], ["services", "Services, water and toilets"], ["parking", "Parking"]];
+	const STAGE_OF = { planning: "site", rooms: "spaces", design: "spaces", water: "services", sanitary: "services" };
+	const TOPIC_STAGE = { "Parking": "parking", "Sanitation": "services", "Services and sustainability": "services", "Stairs, corridors and exits": "fire", "Rooms and spaces": "spaces", "Building elements": "spaces", "Accessibility": "access", "Swimming pools": "spaces" };
+	const stageOf = (s) => s.cat === "bylaws" ? TOPIC_STAGE[s.topic] || "site" : STAGE_OF[s.cat] || s.cat;
+	const srcTag = (s) => s.cat === "bylaws" ? s.state.toUpperCase() : s.src[0].split(/[ ,]/)[0];
 	function row(s) {
 		const fig = figOf(s);
 		return '<article class="rowi" data-id="' + s.id + '" tabindex="0">' +
@@ -278,13 +279,15 @@
 	/* ---------- Calculators ----------
 	 * Each: { title, src, form() → inputs (named with data-k), run(get) → result HTML }. get(k) reads an input in the same box,
 	 * so one calculator can appear in the detail sheet and on the Calculators page at once. */
-	const LOAD = [["Residential", 12.5, 10, 6.5], ["Educational", 4, 10, 6.5], ["Hospital in-patients", 15, 15, 13], ["Hospital out-patients", 10, 15, 13], ["Assembly, no fixed seats", 0.65, 10, 6.5],
-		["Assembly, less concentrated", 1.4, 10, 6.5], ["Dining, restaurant", 1.8, 10, 6.5], ["Shop, street floor", 3, 10, 6.5], ["Shop, upper floor", 6, 10, 6.5], ["Offices", 10, 10, 6.5], ["Industrial", 10, 10, 6.5], ["Storage", 30, 10, 6.5]];
-	const LPCD = [["Homes (cities over 1 lakh)", 200], ["Homes, MIG / LIG / EWS", 135], ["Offices", 45], ["Schools, day", 45], ["Hostels, boarding schools", 135], ["Hospital up to 100 beds", 340], ["Hospital over 100 beds", 450],
-		["Hotel up to 3 star", 180], ["Hotel 4 star and above", 320], ["Restaurant, per seat", 70], ["Cinema, per seat", 15], ["Factory with bathrooms", 45], ["Clubhouse", 45]];
+	// [use, m² per person (Table 3), mm per person stairs / doors (Table 4), min. stair width mm (Part 3 cl. 12.18.1.1), min. exit door mm (Part 4 cl. 4.4.2.4.1)]
+	const LOAD = [["Residential (flats)", 12.5, 10, 6.5, 1250, 1000], ["Educational", 4, 10, 6.5, 1500, 1000], ["Hospital in-patients", 15, 15, 13, 2000, 1000], ["Hospital out-patients", 10, 15, 13, 2000, 1000], ["Assembly, no fixed seats", 0.65, 10, 6.5, 2000, 2000],
+		["Assembly, less concentrated", 1.4, 10, 6.5, 2000, 2000], ["Dining, restaurant", 1.8, 10, 6.5, 2000, 2000], ["Shop, street floor", 3, 10, 6.5, 1500, 1000], ["Shop, upper floor", 6, 10, 6.5, 1500, 1000], ["Offices", 10, 10, 6.5, 1500, 1000], ["Industrial", 10, 10, 6.5, 1500, 1000], ["Storage", 30, 10, 6.5, 1500, 1000]];
+	// [use, litres per day, what is counted]
+	const LPCD = [["Homes (cities over 1 lakh)", 200, "Residents"], ["Homes, MIG / LIG / EWS", 135, "Residents"], ["Offices", 45, "Staff"], ["Schools, day", 45, "Pupils and staff"], ["Hostels, boarding schools", 135, "Residents"], ["Hospital up to 100 beds", 340, "Beds"], ["Hospital over 100 beds", 450, "Beds"],
+		["Hotel up to 3 star", 180, "Beds"], ["Hotel 4 star and above", 320, "Beds"], ["Restaurant, per seat", 70, "Seats"], ["Cinema, per seat", 15, "Seats"], ["Factory with bathrooms", 45, "Workers"], ["Clubhouse", 45, "Members and visitors"]];
 	const opts = (list, i) => list.map((r, k) => '<option value="' + k + '"' + (k === i ? " selected" : "") + ">" + esc(r[0]) + "</option>").join("");
-	const num = (k, label, v, wide) => "<label" + (wide ? ' class="wide"' : "") + ">" + label + '<input class="input num" data-k="' + k + '" type="number" inputmode="numeric" min="0" step="any" value="' + v + '"></label>';
-	const sel = (k, label, html, wide) => "<label" + (wide ? ' class="wide"' : "") + ">" + label + '<select class="input" data-k="' + k + '">' + html + "</select></label>";
+	const num = (k, label, v, wide) => "<label" + (wide ? ' class="wide"' : "") + "><span>" + label + "</span>" + '<input class="input num" data-k="' + k + '" type="number" inputmode="numeric" min="0" step="any" value="' + v + '"></label>';
+	const sel = (k, label, html, wide) => "<label" + (wide ? ' class="wide"' : "") + "><span>" + label + "</span>" + '<select class="input" data-k="' + k + '">' + html + "</select></label>";
 	const fmt = (n, d) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: d == null ? 1 : d });
 	const out = (big, small, rows) => "<b class='num'>" + big + "</b>" + (small ? "<small>" + small + "</small>" : "") +
 		(rows ? '<div class="out-rows">' + rows.map((r) => "<div><span>" + r[0] + "</span><b>" + r[1] + "</b></div>").join("") + "</div>" : "");
@@ -298,19 +301,24 @@
 	const SCHOOL = [["Nursery", 15, 15, 0, 15, 15], ["Day school", 40, 25, 20, 60, 40], ["Residential school", 8, 6, 25, 8, 6]];
 	const CALC = {
 		tank: { title: "Water tanks", src: "NBC 2016, Part 9, cl. 4.1 and 4.4.10",
-			form: () => num("n", "People (or seats, beds)", 40) + sel("u", "Building", opts(LPCD, 0)) + sel("m", "Storage", '<option value="both">Sump + overhead tank</option><option value="oht">Overhead tank only</option><option value="ugt">Sump only</option>', true),
+			fields: (g) => ({ n: LPCD[g("u")][2] }),
+			form: () => num("n", "Residents", 40) + sel("u", "Building", opts(LPCD, 0)) + sel("m", "Storage", '<option value="int">Sump + overhead tank, intermittent supply</option><option value="both">Sump + overhead tank, code minimum</option><option value="oht">Overhead tank only</option><option value="ugt">Sump only</option>', true),
 			run: (g) => {
 				const n = g("n"), r = LPCD[g("u")], day = n * r[1], m = g("m", true);
 				if (!n) return "";
 				const L = (x) => fmt(x, 0) + " L · " + fmt(x / 1000, 1) + " m³";
-				const rows = m === "both" ? [["Sump (UGT), 66.6%", L(day * 0.666)], ["Overhead tank (OHT), 33.3%", L(day * 0.3333)]]
+				const rows = m === "int" ? [["Sump (UGT), 1.5 days", L(day * 1.5)], ["Overhead tank (OHT), 0.5 day", L(day * 0.5)]] : m === "both" ? [["Sump (UGT), 66.6%", L(day * 0.666)], ["Overhead tank (OHT), 33.3%", L(day * 0.3333)]]
 					: m === "oht" ? [["Overhead tank, 33.3% to 50%", fmt(day * 0.3333, 0) + " – " + fmt(day * 0.5, 0) + " L"]] : [["Sump, 50% to 150%", fmt(day * 0.5, 0) + " – " + fmt(day * 1.5, 0) + " L"]];
-				return out(fmt(day, 0) + " L a day", fmt(n, 0) + " × " + r[1] + " litres. Fire-fighting storage is extra (Part 4).", rows);
+				return out(fmt(day, 0) + " L a day", fmt(n, 0) + " " + r[2].toLowerCase() + " × " + r[1] + " litres. Fire-fighting storage is extra (Part 4).", rows);
 			} },
 		toilets: { title: "Toilets required", src: "NBC 2016, Part 9, cl. 4.2, Tables 1, 10, 11, 15",
+			fields: (g) => ({
+				office: { a: "Men", w: "Women", c: null, s: null }, school: { a: "Boys", w: "Girls", c: null, s: "School type" },
+				rest: { a: "Staff, men", w: "Staff, women", c: "Seats", s: null }, mall: { a: "Staff, men", w: "Staff, women", c: "Visitors at peak", s: null },
+				home: { a: null, w: null, c: null, s: null } })[g("b", true)],
 			form: () => sel("b", "Building", '<option value="office">Office</option><option value="school">School</option><option value="rest">Restaurant</option><option value="mall">Shop / mall</option><option value="home">House / flat</option>', true) +
 				num("a", "Men / boys / staff men", 60) + num("w", "Women / girls / staff women", 40) +
-				num("c", "Seats or visitors (restaurant, mall)", 100) + sel("s", "School type", opts(SCHOOL, 1)),
+				num("c", "Seats", 100) + sel("s", "School type", opts(SCHOOL, 1)),
 			run: (g) => {
 				const b = g("b", true), a = g("a"), w = g("w"), c = g("c");
 				if (b === "home") return out("Per dwelling", "With its own toilet: a bathroom, a WC with an ablution tap, and a kitchen sink or wash place.", [["Bathroom", "1"], ["Water closet", "1"], ["Kitchen sink / wash place", "1"]]);
@@ -335,8 +343,11 @@
 			run: (g) => {
 				const a = g("a"), r = LOAD[g("u")];
 				if (!a) return "";
-				const n = Math.ceil(a / r[1]);
-				return out(fmt(n, 0) + " people", "Floor by floor, never below the minimum stair width.", [["Stair width", fmt(n * r[2], 0) + " mm"], ["Doors and ramps", fmt(n * r[3], 0) + " mm"]]);
+				const n = Math.ceil(a / r[1]), up = (x) => Math.ceil(x / 250) * 250; // exit width counts in 250 mm half-units
+				const minS = r[0].indexOf("Assembly") === 0 || r[0].indexOf("Dining") === 0 ? (n < 150 ? 1500 : 2000) : r[4];
+				const st = up(n * r[2]), dr = up(n * r[3]), gov = (w, m) => fmt(Math.max(w, m), 0) + " mm" + (m >= w ? " (the minimum governs)" : " (the occupants govern)");
+				return out(fmt(n, 0) + " people", "Per floor. Each person needs " + r[2] + " mm of stair and " + r[3] + " mm of door width, counted across all the exits together, in 250 mm steps. No stair or door may be narrower than its minimum. Buildings over 15 m need at least 2 stairs.",
+					[["Stair width for " + fmt(n, 0) + " people", fmt(n * r[2], 0) + " mm"], ["Minimum stair width", fmt(minS, 0) + " mm"], ["Stair width to provide", gov(st, minS)], ["Door width for " + fmt(n, 0) + " people", fmt(n * r[3], 0) + " mm"], ["Minimum exit door width", fmt(r[5], 0) + " mm"], ["Door width to provide", gov(dr, r[5])]]);
 			} },
 		ramp: { title: "Ramp from a level difference", src: "NBC 2016, Part 3, Annex B, Table 10",
 			form: () => num("r", "Level difference, mm", 600, true),
@@ -352,6 +363,7 @@
 		tnset: { title: "Setbacks", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, rules 35(1)(a), 35(1)(b), 39(3)",
 			form: () => sel("k", "Building", '<option value="s">Small: up to 16 homes or 300 m² commercial</option><option value="l">Larger, up to 18.3 m tall</option><option value="h">High-rise, over 18.3 m</option>', true) +
 				num("r", "Road width in front, m", 9) + num("h", "Building height, m", 10) + num("w", "Plot width, m", 12, true),
+			fields: (g) => ({ s: {}, l: { w: null }, h: { r: null, w: null } })[g("k", true)],
 			run: (g) => {
 				const k = g("k", true), r = g("r"), h = g("h"), w = g("w");
 				if (!h) return "";
@@ -369,7 +381,7 @@
 				if (r < 6 && h > 9) return out("Over 9 m", "On roads under 6 m wide the limit is 9 m (G+1, or stilt + 2).");
 				const f = r <= 9 ? 1.5 : r <= 18 ? 3 : r <= 30.5 ? 4.5 : 6;
 				const side = h <= 7 ? (w <= 9 ? "1 m on one side" : "1 m on both sides") : w <= 6 ? "1 m on one side" : w <= 9 ? "1.5 m on one side" : "1.5 m on both sides";
-				return out(fmt(f) + " m front", "Continuous building areas: front 1.5 m, sides and rear nil. EWS areas: front 1.0 m.", [["Front", fmt(f) + " m"], ["Side", side], ["Rear", h <= 7 ? "nil" : "1.5 m"]]);
+				return out(fmt(f) + " m front", "Continuous building areas: front 1.5 m, sides and rear nil. EWS areas: front 1.0 m, sides and rear nil.", [["Front", fmt(f) + " m"], ["Side", side], ["Rear", h <= 7 ? "nil" : "1.5 m"]]);
 			} },
 		tnfsi: { title: "FSI and floor area", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, rules 35 and 39",
 			form: () => sel("k", "Building", '<option value="s">Small: up to 16 homes or 300 m² commercial</option><option value="l">Non high-rise, up to 18.3 m</option><option value="h">High-rise, over 18.3 m</option>', true) +
@@ -391,12 +403,14 @@
 			} },
 		tnpark: { title: "Parking spaces", group: "Tamil Nadu · TNCDBR 2019", src: "TNCDBR 2019, Annexure IV, Part I",
 			form: () => sel("u", "Use", '<option value="home">Homes</option><option value="shop">Shops, supermarkets</option><option value="office">Offices</option><option value="govt">Government offices</option>', true) +
-				num("n", "Number of homes (homes only)", 12) + num("a", "Floor area of one home, or total floor area, m²", 70) +
+				num("n", "Number of homes", 12) + num("a", "Floor area of one home, m²", 70) +
 				sel("z", "Area", '<option value="c">Corporation or municipality</option><option value="p">Panchayat</option>', true),
+			fields: (g) => g("u", true) === "home" ? {} : { n: null, a: "Total floor area, m²", z: g("u", true) === "shop" ? "Area" : null },
 			run: (g) => {
 				const u = g("u", true), n = g("n"), a = g("a"), pan = g("z", true) === "p";
 				if (!a) return "";
-				const res = (c, t, vc, vt, why, rows) => out(fmt(c + vc, 0) + " cars · " + fmt(t + vt, 0) + " two-wheelers", why, rows.concat([["Cars", fmt(c, 0)], ["Two-wheelers", fmt(t, 0)], ["Visitors: cars", fmt(vc, 0)], ["Visitors: two-wheelers", fmt(vt, 0)]]));
+				const pl = (n, w) => fmt(n, 0) + " " + w + (n === 1 ? "" : "s");
+				const res = (c, t, vc, vt, why, rows) => out(pl(c + vc, "car") + " · " + pl(t + vt, "two-wheeler"), why, rows.concat([["Cars", fmt(c, 0)], ["Two-wheelers", fmt(t, 0)], ["Visitors: cars", fmt(vc, 0)], ["Visitors: two-wheelers", fmt(vt, 0)]]));
 				if (u === "home") {
 					if (!n) return "";
 					const st = pan ? [50, 75, 100] : [25, 50, 75];
@@ -424,7 +438,13 @@
 	function mountCalc(box, c) {
 		box.innerHTML = '<div class="calc-in">' + c.form() + '</div><div class="calc-out"></div>';
 		const g = (k, raw) => { const el = box.querySelector('[data-k="' + k + '"]'); return raw ? el.value : Math.max(0, Number(el.value) || 0); };
-		const upd = () => { box.querySelector(".calc-out").innerHTML = c.run(g); };
+		const labels = {};
+		box.querySelectorAll("[data-k]").forEach((el) => { const lb = el.closest("label"); labels[el.dataset.k] = [lb, lb.querySelector("span").textContent]; });
+		const upd = () => {
+			const f = c.fields ? c.fields(g) || {} : {};
+			Object.keys(labels).forEach((k) => { const [lb, def] = labels[k]; lb.hidden = f[k] === null; lb.querySelector("span").textContent = f[k] || def; });
+			box.querySelector(".calc-out").innerHTML = c.run(g);
+		};
 		box.addEventListener("input", upd);
 		box.addEventListener("change", upd);
 		upd();
