@@ -214,9 +214,9 @@ select.input option { background: var(--bg-2); }
 .suggest h2 { font-size: 20px; margin: 8px 0 4px; }
 
 /* Calculators page */
-.tools { display: grid; gap: 12px; margin-bottom: 30px; }
+.tools { display: grid; gap: 12px; margin-bottom: 30px; align-items: start; }
 @media (min-width: 900px) { .tools { grid-template-columns: 1fr 1fr; } }
-.tool { display: grid; gap: 12px; padding: 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); }
+.tool { display: grid; align-content: start; gap: 12px; padding: 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); }
 .tool h3 { font-size: 18px; }
 .tool .src { font: 11.5px var(--mono); color: var(--text-3); }
 .tool .calc-in { grid-template-columns: 1fr 1fr; }
