@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Standards · ArchXchange</title>
+<meta name="description" content="Indian building standards from NBC 2016 and URDPFI in plain words, with the clause to cite. Search, save to your projects, and check as you design.">
+<meta name="theme-color" content="#08090C">
+<link rel="icon" href="ax-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<header class="top">
+	<div class="wrap top-in">
+		<a class="brand" href="#/"><img src="ax-mark.svg" alt="" width="26" height="26"><span>ARCH<b>X</b>CHANGE</span><em>Standards</em></a>
+		<nav class="tabs" aria-label="Sections">
+			<a href="#/" data-view="library">Library</a>
+			<a href="#/projects" data-view="projects">My projects <i id="proj-count"></i></a>
+		</nav>
+	</div>
+</header>
+
+<main class="wrap">
+	<!-- Library -->
+	<section id="library" class="view">
+		<div class="hero">
+			<h1>Every standard.<br><span class="grad">One search away.</span></h1>
+			<p>Indian building standards from the National Building Code 2016 and URDPFI, in plain words, with the clause to cite. Save them to your projects and check as you design.</p>
+			<div class="search">
+				<span class="search-ico" aria-hidden="true">⌕</span>
+				<input id="q" type="search" placeholder="Search: riser, ramp, kitchen size, parking, school land…" autocomplete="off" enterkeyhint="search" aria-label="Search standards">
+				<kbd class="hide-sm">/</kbd>
+			</div>
+			<div class="chips" id="popular"></div>
+		</div>
+
+		<div class="today" id="today"></div>
+
+		<div class="filters">
+			<div class="filter-row">
+				<span class="k">Building</span>
+				<div class="seg" id="types" role="radiogroup" aria-label="Building type"></div>
+			</div>
+			<div class="cats" id="cats"></div>
+		</div>
+
+		<div class="results-head"><h2 id="results-title">All standards</h2><span class="count" id="count"></span></div>
+		<div class="grid" id="results"></div>
+		<p class="empty" id="none" hidden>Nothing matches. Try a simpler word, like “stair”, “door” or “water”.</p>
+	</section>
+
+	<!-- Projects -->
+	<section id="projects" class="view" hidden>
+		<div class="page-head">
+			<div><h1>My projects</h1><p class="sub">Save the standards each project must meet, tick them off as you design, and print a checklist.</p></div>
+		</div>
+		<form class="new-proj" id="new-proj" autocomplete="off">
+			<input class="input" id="np-name" placeholder="Project name, e.g. Residence at Anna Nagar" required maxlength="80" aria-label="Project name">
+			<select class="input" id="np-type" aria-label="Building type"></select>
+			<button class="btn primary" type="submit">Create project</button>
+		</form>
+		<div class="proj-list" id="proj-list"></div>
+	</section>
+
+	<!-- One project -->
+	<section id="project" class="view" hidden></section>
+</main>
+
+<footer class="foot wrap">
+	<p><b>Sources.</b> National Building Code of India 2016 (BIS): Part 3 with Annex B, Part 4, Part 9. URDPFI Guidelines 2014, Vol. I (Ministry of Urban Development). Values are summarised in our own words with the clause to cite; read the code itself for the full text and exceptions. Local building bye-laws and the latest amendments prevail.</p>
+	<p class="brandline">ArchXchange · archxchange.in</p>
+</footer>
+
+<!-- Detail sheet -->
+<div class="sheet-back" id="sheet-back" hidden></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-title" hidden></aside>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
