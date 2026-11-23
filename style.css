@@ -359,13 +359,15 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 /* PDF book: hidden on screen, the only thing printed in book mode. Follows the brand kit:
    Poppins; Midnight, Slate, Stone, Sand; Copper only for the X, the values and key accents. */
 .book { display: none; }
-@page { size: A4; margin: 14mm 15mm 15mm; }
+/* Margins live on the book itself (padding, cloned on every page), so the PDF looks right even when the
+   print dialog is set to Margins: None or the browser ignores @page margins (Safari). */
+@page { size: A4; margin: 0; }
 @media print {
 	:root { color-scheme: light; }
 	html, body { background: #fff !important; width: auto !important; overflow: visible !important; }
 	* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 	body.book-mode > *:not(.book) { display: none !important; }
-	body.book-mode .book { display: block; color: #0F172A; font: 400 10pt/1.5 Poppins, "Segoe UI", sans-serif; }
+	body.book-mode .book { display: block; box-sizing: border-box; width: auto; max-width: 100%; padding: 14mm 15mm 16mm; -webkit-box-decoration-break: clone; box-decoration-break: clone; color: #0F172A; font: 400 10pt/1.5 Poppins, "Segoe UI", sans-serif; }
 	.book h1, .book h2 { color: #0F172A; font-family: Poppins, sans-serif; font-weight: 600; letter-spacing: -0.01em; }
 	.bk-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 5mm; border-bottom: 0.6pt solid #D8D2C4; }
 	.bk-lock { display: flex; align-items: center; gap: 4mm; }
@@ -410,7 +412,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 	.bk-one .bk-fig figcaption { margin-top: 2.5mm; }
 	.bk-one .bk-item table { font-size: 10pt; margin-top: 3mm; }
 	.bk-one .bk-item td { padding: 1.7mm 0; }
-	.bk-one .bk-foot { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; background: #fff; }
+	.bk-one .bk-foot { position: fixed; left: 15mm; right: 15mm; bottom: 8mm; margin: 0; background: #fff; }
 	.bk-one .bk-src { margin-top: 4mm; padding: 3mm 4mm; background: #F6F3EE; border-left: 1.5pt solid #C9734A; border-radius: 0 2mm 2mm 0; }
 }
 
