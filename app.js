@@ -16,7 +16,7 @@
 	// Drawings that exist in figs/ (drawn for ArchXchange; never copied from a code or book).
 	const FIGS = new Set(window.AXS.FIGS || []);
 	const CADS = window.AXS.CAD || {};
-	const figOf = (s) => s.fig && FIGS.has(s.fig) ? "figs/" + s.fig + ".svg" : "";
+	const figOf = (s) => s.fig && FIGS.has(s.fig) ? "figs/" + s.fig + ".png" : "";
 	const BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>';
 
 	/* ---------- Saved projects, on this device ---------- */
@@ -445,7 +445,7 @@
 			'<span class="k">' + esc(label(s)) + "</span>" +
 			'<h2 class="sh-title" id="sh-title">' + esc(s.title) + "</h2>" +
 			'<div class="sh-value num grad">' + esc(s.value) + '</div><p class="sh-sub">' + esc(s.sub) + "</p>" +
-			(fig ? '<figure class="sh-fig"><img src="' + fig + '" alt="Drawing: ' + esc(s.title) + '"><figcaption>' + (CADS[s.fig] ? "ArchXchange CAD drawing, drafted full size in mm. " : "ArchXchange drawing, not to scale. ") + "Dimensions per " + esc(cite(s)) + ".</figcaption></figure>" +
+			(fig ? '<figure class="sh-fig"><a href="' + fig + '" target="_blank" rel="noopener" title="Open full size"><img src="' + fig + '" alt="Drawing: ' + esc(s.title) + '"></a><figcaption>' + (CADS[s.fig] ? "ArchXchange CAD drawing, drafted full size in mm. " : "ArchXchange drawing, not to scale. ") + "Dimensions per " + esc(cite(s)) + ".</figcaption></figure>" +
 				"" : "") +
 			(s.rows ? '<div class="sh-block"><span class="k">Values</span><table class="rows">' + s.rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table></div>" : "") +
 			(s.notes ? '<div class="sh-block"><span class="k">Also</span><ul class="notes">' + s.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul></div>" : "") +

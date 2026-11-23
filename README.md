@@ -39,22 +39,16 @@ git push
 | `bylaws.js` | States (`STATES`) and state rules (`RULES`); rules use the same shape as standards, with `state` and `topic` |
 | `app.js` | Search, filters, detail sheet, calculators, bylaws, projects, routing |
 | `style.css` | Look and layout |
-| `figs/*.svg` | Web previews of the drawings |
+| `figs/*.png` | Web previews of the drawings |
 
 ## Drawings and CAD files
 
-- **CAD sheets:** six sheets drafted in CADCraft at full size in millimetres. Each has layers, a wall poché, dimension strings and a title block:
-  - accessible toilet (Type A)
-  - stair section
-  - ramp section
-  - car parking plan
-  - accessible lift
-  - wheelchair space and turning
-- **DWG and DXF files** are in `../standards-cad/`, outside this public repository, because they are for paying users. The detail sheet shows a "Download · Pro" button that is not live yet.
-- **Text:** the Standard text style uses Bahnschrift (a TrueType font that comes with Windows).
-- **PDF sheets:** A3, at true scale, with an ArchXchange title block, in `../standards-cad/`. They are printed by headless Edge from an HTML sheet around a print-coloured SVG.
-- **Web previews:** the SVGs in `figs/` are exported from the same drawings, with coordinates rounded and recoloured to the web palette.
-- The window-area figure was made in VectorCraft.
+- **Rayon model "ArchXchange Standards":** 18 sheets, one canvas each, in one shared style (layers AX-SHEET, AX-CLEAR, AX-MOVE, AX-WALL, AX-FIXTURE, AX-ACCENT, AX-DIM, AX-TEXT; teal = keep clear, amber = movement or area, copper = key sizes; font Geist). Each canvas has an A3 frame and title block at its scale.
+  - NBC: accessible toilet, wheelchair space and turning, accessible lift, car parking, stair section, ramp section, room heights, minimum rooms, windows and ventilators, staircase widths, parapets, kerb ramp, exits and travel distance.
+  - Tamil Nadu: setbacks, heights and high-rise setbacks, parking stalls, FSI and coverage, parking required.
+- **DWG, DXF and A3 PDF files** are exported from Rayon (Menu, Export, one canvas at a time) into `../standards-cad/`, outside this public repository, because they are for paying users.
+- **Web previews:** `figs/*.png` are Rayon captures of each drawing without its title block. `FIGS` in `data.js` lists them; each standard and rule names its drawing with `fig`.
+- Tables (water demand, tanks, toilet counts, planning norms, occupant load) have no drawing.
 
 ## Sources and rules for adding content
 
