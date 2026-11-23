@@ -57,7 +57,6 @@ git push
   - NBC 2016 Vol. 1: Part 3 including Annex B, and Part 4.
   - NBC 2016 Vol. 2: Part 9.
   - URDPFI Guidelines 2014, Vol. I.
-  - All are in `G:\academics\BOOKS`.
 - **How values were checked:** each one was read from the PDF text on 23 Nov 2026 and is cited by clause or table.
 - **Write in our own words.** Never paste code text, tables or drawings. The NBC PDF is a licensed copy; never upload or share it.
 - **Draw new figures ourselves** (VectorCraft or CADCraft), on the house style:
