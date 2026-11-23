@@ -24,15 +24,15 @@
 	const ALL = ["all"];
 	const R = [
 		/* ---------- Tamil Nadu: setbacks ---------- */
-		{ id: "tn-front", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Front setback (up to 16 homes)", value: "1.5–6.0 m", sub: "by the width of the road in front; buildings up to 12 m",
+		{ id: "tn-front", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Front setback, small buildings", value: "1.5–6.0 m", sub: "by road width; up to 12 m, 16 homes or 300 m² commercial",
 			rows: [["Road up to 9 m", "1.5 m"], ["Road over 9 m, up to 18 m", "3.0 m"], ["Road over 18 m, up to 30.5 m", "4.5 m"], ["Road over 30.5 m", "6.0 m"], ["Continuous building areas", "1.5 m"], ["EWS areas", "1.0 m"]],
 			notes: ["Measured from the street alignment or new road line where one is prescribed, otherwise from the property boundary.", "For up to 16 dwellings, or commercial and similar small uses up to 300 m²."],
 			uses: ALL, calc: "tnset", src: [TN, "rule 35(1)(a)"], tags: "front setback set back road width open space tamil nadu chennai tncdbr" },
-		{ id: "tn-side", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Side setback (up to 16 homes)", value: "1.0–1.5 m", sub: "by building height and plot width; nil in continuous building areas",
+		{ id: "tn-side", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Side setback, small buildings", value: "1.0–1.5 m", sub: "by building height and plot width; nil in continuous building areas",
 			rows: [["Height up to 7 m, plot up to 9 m wide", "1 m on one side"], ["Height up to 7 m, plot over 9 m wide", "1 m on both sides"], ["Height 7–12 m, plot up to 6 m wide", "1 m on one side"],
 				["Height 7–12 m, plot 6–9 m wide", "1.5 m on one side"], ["Height 7–12 m, plot over 9 m wide", "1.5 m on both sides"]],
 			uses: ALL, calc: "tnset", src: [TN, "rule 35(1)(a)"], tags: "side setback set back plot width tamil nadu tncdbr" },
-		{ id: "tn-rear", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Rear setback (up to 16 homes)", value: "Nil / 1.5 m", sub: "nil up to 7 m height; 1.5 m from 7 m to 12 m; nil in continuous building areas",
+		{ id: "tn-rear", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Rear setback, small buildings", value: "Nil / 1.5 m", sub: "nil up to 7 m height; 1.5 m from 7 m to 12 m; nil in continuous building areas",
 			uses: ALL, calc: "tnset", src: [TN, "rule 35(1)(a)"], tags: "rear setback back set back tamil nadu tncdbr" },
 		{ id: "tn-large-setbacks", fig: "tn-setbacks", state: "tn", topic: "Setbacks", title: "Setbacks, larger buildings up to 18.3 m", value: "3.0–6.0 m", sub: "front, by road width; more than 16 homes or 300 m² commercial",
 			rows: [["Front: road 9–18 m", "3.0 m"], ["Front: road 18–30.5 m", "4.5 m"], ["Front: road over 30.5 m", "6.0 m"], ["Side and rear: height up to 7 m", "1.0 m"], ["Side and rear: 7–12 m", "1.5 m"], ["Side and rear: 12–16 m", "2.5 m"], ["Side and rear: 16–18.3 m", "3.0 m"]],

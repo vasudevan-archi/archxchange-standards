@@ -201,19 +201,24 @@
 		const book = $("book"), order = STAGES.map((g) => g[0]), figsShown = new Set();
 		entries = entries.slice().sort((a, b) => order.indexOf(stageOf(a.s)) - order.indexOf(stageOf(b.s)));
 		let stage = "";
-		book.innerHTML = '<header class="bk-head"><div class="bk-brand">ARCH<b>X</b>CHANGE <span>Standards</span></div><h1>' + esc(title) + "</h1><p>" + esc(sub) + " · " + entries.length + (entries.length === 1 ? " item" : " items") + " · " + new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) + "</p></header>" +
+		const one = entries.length === 1, today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+		book.classList.toggle("bk-one", one);
+		// Brand lockup (brand kit): aX monogram, a vertical rule, the tracked wordmark with a copper X, and the tagline.
+		book.innerHTML = '<header class="bk-head"><div class="bk-lock"><img src="ax-mark.svg" alt="ArchXchange"><i></i><div><div class="bk-word">ARCH<b>X</b>CHANGE</div><div class="bk-tag">Design • Plan • Build • Better</div></div></div>' +
+			'<div class="bk-meta"><span>' + (one ? "Standard sheet" : "Standards book") + "</span>" + today + "</div></header>" +
+			(one ? "" : '<div class="bk-cover"><h1>' + esc(title) + "</h1><p>" + esc(sub) + " · " + entries.length + " items</p></div>") +
 			entries.map((en) => {
 				const s = en.s, x = en.x, fig = figsShown.has(s.fig) ? "" : figOf(s), st = stageOf(s);
 				if (fig) figsShown.add(s.fig);
 				const head = entries.length > 1 && st !== stage ? '<h3 class="bk-stage">' + (order.indexOf(st) + 1) + ". " + esc(STAGES[order.indexOf(st)][1]) + "</h3>" : "";
 				stage = st;
 				return head + '<article class="bk-item"><span class="k">' + esc(label(s)) + "</span><h2>" + esc(s.title) + (x ? ' <em class="bk-st">' + esc((STATUS.find((t) => t[0] === x.s) || STATUS[0])[1]) + "</em>" : "") + '</h2><div class="bk-v">' + esc(s.value) + "</div><p>" + esc(s.sub) + "</p>" +
-					(fig ? '<img src="' + fig + '" alt="">' : "") +
+					(fig ? '<figure class="bk-fig"><img src="' + fig + '" alt=""' + (one ? ' style="max-height:' + Math.max(50, Math.min(90, 92 - 4 * ((s.rows || []).length + 1.4 * (s.notes || []).length))) + 'mm"' : "") + '><figcaption>ArchXchange drawing · dimensions in mm · ' + esc(cite(s)) + "</figcaption></figure>" : "") +
 					(s.rows ? "<table>" + s.rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table>" : "") +
 					(s.notes ? "<ul>" + s.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul>" : "") +
-					(x && x.note ? '<p class="bk-note">Note: ' + esc(x.note) + "</p>" : "") + '<p class="bk-src">' + esc(cite(s)) + "</p></article>";
+					(x && x.note ? '<p class="bk-note">Note: ' + esc(x.note) + "</p>" : "") + '<p class="bk-src"><span>Source</span>' + esc(cite(s)) + "</p></article>";
 			}).join("") +
-			'<footer class="bk-foot">Summarised by ArchXchange in our own words, with the clause to cite. Read the source for the full text and exceptions; local bylaws and later amendments prevail. archxchange.in</footer>';
+			'<footer class="bk-foot"><span>Summarised by ArchXchange in our own words, with the clause to cite. Read the source for the full text and exceptions; local bylaws and later amendments prevail.</span><b>www.archxchange.in</b></footer>';
 		document.body.classList.add("book-mode");
 		toast("Choose “Save as PDF” in the print window");
 		const imgs = Array.from(book.querySelectorAll("img"));
@@ -249,7 +254,8 @@
 	$("cats").addEventListener("click", (e) => { const b = e.target.closest(".cat"); if (!b) return; $("q").value = state.q = ""; state.cat = b.dataset.cat; renderLibrary(); $("results-head").scrollIntoView({ behavior: "smooth", block: "start" }); });
 	document.addEventListener("keydown", (e) => {
 		if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") { e.preventDefault(); location.hash = "#/"; $("q").focus(); }
-		if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
+		if (e.key === "Escape" && !$("zoom").hidden) closeZoom();
+		else if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
 		if (e.key === "Enter" && e.target.classList && (e.target.classList.contains("card") || e.target.classList.contains("rowi"))) openSheet(e.target.dataset.id);
 	});
 	// Cards anywhere: open the detail, or save with the bookmark.
@@ -441,12 +447,13 @@
 		const fig = figOf(s), c = s.calc && CALC[s.calc];
 		const uses = s.uses.indexOf("all") > -1 ? ["All buildings"] : s.uses.map(typeName);
 		const projOpts = db.projects.map((p) => '<option value="' + p.id + '"' + (p.id === db.active ? " selected" : "") + ">" + esc(p.name) + "</option>").join("");
-		$("sheet").innerHTML = '<button type="button" class="sh-close" id="sh-close" aria-label="Close">✕</button>' +
-			'<span class="k">' + esc(label(s)) + "</span>" +
+		$("sheet").classList.toggle("narrow", !fig);
+		$("sheet").innerHTML = '<button type="button" class="sh-close" id="sh-close" aria-label="Close">✕</button><div class="sh-grid">' +
+			'<div class="sh-head"><span class="k">' + esc(label(s)) + "</span>" +
 			'<h2 class="sh-title" id="sh-title">' + esc(s.title) + "</h2>" +
-			'<div class="sh-value num grad">' + esc(s.value) + '</div><p class="sh-sub">' + esc(s.sub) + "</p>" +
-			(fig ? '<figure class="sh-fig"><a href="' + fig + '" target="_blank" rel="noopener" title="Open full size"><img src="' + fig + '" alt="Drawing: ' + esc(s.title) + '"></a><figcaption>' + (CADS[s.fig] ? "ArchXchange CAD drawing, drafted full size in mm. " : "ArchXchange drawing, not to scale. ") + "Dimensions per " + esc(cite(s)) + ".</figcaption></figure>" +
-				"" : "") +
+			'<div class="sh-value num grad">' + esc(s.value) + '</div><p class="sh-sub">' + esc(s.sub) + "</p></div>" +
+			(fig ? '<div class="sh-media"><figure class="sh-fig"><button type="button" class="fig-zoom" id="sh-zoom" aria-label="Enlarge the drawing"><img src="' + fig + '" alt="Drawing: ' + esc(s.title) + '"><span class="zoom-tag">⤢ Enlarge</span></button><figcaption>' + (CADS[s.fig] ? "ArchXchange CAD drawing, drafted full size in mm. " : "ArchXchange drawing, not to scale. ") + "Dimensions per " + esc(cite(s)) + ".</figcaption></figure></div>" : "") +
+			'<div class="sh-body">' +
 			(s.rows ? '<div class="sh-block"><span class="k">Values</span><table class="rows">' + s.rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table></div>" : "") +
 			(s.notes ? '<div class="sh-block"><span class="k">Also</span><ul class="notes">' + s.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul></div>" : "") +
 			(c ? '<div class="sh-block"><span class="k">Work it out</span><div class="calc"><b style="color:var(--text)">' + esc(c.title) + '</b><div class="calc-box" id="sh-calc"></div></div></div>' : "") +
@@ -458,8 +465,10 @@
 			'<div class="sh-block" id="sh-save"><span class="k">Save to a project</span>' +
 			(db.projects.length ? '<div class="sh-actions"><select class="input" id="sh-proj">' + projOpts + '</select><button type="button" class="btn primary" id="sh-add"></button></div>'
 				: '<div class="sh-actions"><input class="input" id="sh-new" placeholder="Name your first project" maxlength="80"><button type="button" class="btn primary" id="sh-create">Create and save</button></div>') +
-			'</div><p class="caveat">Summarised from the source in our own words. Check the code for the full clause and exceptions; local bye-laws and later amendments prevail.</p>';
+			'</div><p class="caveat">Summarised from the source in our own words. Check the code for the full clause and exceptions; local bye-laws and later amendments prevail.</p></div></div>';
 		$("sheet").hidden = $("sheet-back").hidden = false;
+		$("sheet").scrollTop = 0;
+		if (fig) $("sh-zoom").addEventListener("click", () => openZoom(fig, s.title));
 		document.body.style.overflow = "hidden";
 		if (c) mountCalc($("sh-calc"), c);
 		const saveLabel = () => { const p = project($("sh-proj").value); $("sh-add").textContent = p && p.items.some((x) => x.id === s.id) ? "Saved ✓ Remove" : "Save"; };
@@ -488,6 +497,45 @@
 		(saving && $("sh-new") ? $("sh-new") : $("sh-close")).focus();
 		if (!$("library").hidden && location.hash !== "#/s/" + s.id) history.replaceState(null, "", "#/s/" + s.id);
 	}
+	/* ---------- Drawing viewer: fit, zoom with buttons, wheel or double-click, drag to pan ---------- */
+	const ZL = [1, 1.5, 2, 3, 4];
+	let zi = 0;
+	function setZoom(i, px, py) {
+		const st = $("zoom-stage"), img = $("zoom-img");
+		const ax = px == null ? st.clientWidth / 2 : px, ay = py == null ? st.clientHeight / 2 : py;
+		const rx = (st.scrollLeft + ax) / Math.max(st.scrollWidth, 1), ry = (st.scrollTop + ay) / Math.max(st.scrollHeight, 1);
+		zi = Math.max(0, Math.min(ZL.length - 1, i));
+		const fit = Math.min((st.clientWidth - 32) / (img.naturalWidth || 1), (st.clientHeight - 32) / (img.naturalHeight || 1));
+		img.style.width = Math.round(img.naturalWidth * fit * ZL[zi]) + "px";
+		st.classList.toggle("zoomed", zi > 0);
+		st.scrollLeft = rx * st.scrollWidth - ax;
+		st.scrollTop = ry * st.scrollHeight - ay;
+		$("zoom-level").textContent = Math.round(ZL[zi] * 100) + "%";
+	}
+	function openZoom(src, title) {
+		const img = $("zoom-img");
+		$("zoom-title").textContent = title;
+		$("zoom-open").href = src;
+		$("zoom").hidden = false;
+		img.onload = () => setZoom(0);
+		img.src = src;
+		if (img.complete) setZoom(0);
+		$("zoom-x").focus();
+	}
+	const closeZoom = () => { $("zoom").hidden = true; if ($("sh-zoom")) $("sh-zoom").focus(); };
+	$("zoom").querySelectorAll("[data-z]").forEach((b) => b.addEventListener("click", () => setZoom(b.dataset.z === "fit" ? 0 : zi + (b.dataset.z === "+" ? 1 : -1))));
+	$("zoom-x").addEventListener("click", closeZoom);
+	(() => {
+		const st = $("zoom-stage"), at = (e) => { const r = st.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+		let drag = null;
+		st.addEventListener("dblclick", (e) => { const p = at(e); setZoom(zi ? 0 : 2, p[0], p[1]); });
+		st.addEventListener("wheel", (e) => { e.preventDefault(); const p = at(e); setZoom(zi + (e.deltaY < 0 ? 1 : -1), p[0], p[1]); }, { passive: false });
+		st.addEventListener("pointerdown", (e) => { if (!zi) return; drag = { x: e.clientX, y: e.clientY, l: st.scrollLeft, t: st.scrollTop }; st.setPointerCapture(e.pointerId); });
+		st.addEventListener("pointermove", (e) => { if (drag) { st.scrollLeft = drag.l - (e.clientX - drag.x); st.scrollTop = drag.t - (e.clientY - drag.y); } });
+		st.addEventListener("pointerup", () => { drag = null; });
+		window.addEventListener("resize", () => { if (!$("zoom").hidden) setZoom(zi); });
+	})();
+
 	function closeSheet() {
 		$("sheet").hidden = $("sheet-back").hidden = true;
 		document.body.style.overflow = "";
