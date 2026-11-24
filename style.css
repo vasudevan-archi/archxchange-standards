@@ -450,3 +450,4 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .type-chips > span { font-size: 13px; color: var(--text-2); margin-right: 2px; }
 a.chip { text-decoration: none; }
 .chip.on { background: var(--grad); color: #1a1208; border-color: transparent; font-weight: 600; }
+.key-sub { margin: -4px 0 12px; }

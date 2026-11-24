@@ -156,14 +156,35 @@
 	}
 
 	/* ---------- One building: everything it needs, in design order ---------- */
-	const STAGES = [["spaces", "Rooms and spaces"], ["stairs", "Stairs"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and life safety"], ["services", "Water, toilets and services"], ["parking", "Parking"], ["site", "Site and planning"]];
+	const STAGES = [["ops", "Handling, loading and trucks"], ["spaces", "Rooms and spaces"], ["stairs", "Stairs"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and life safety"], ["services", "Water, toilets and services"], ["parking", "Parking"], ["site", "Site and planning"]];
 	const STAGE_OF = { planning: "site", rooms: "spaces", water: "services", sanitary: "services" };
-	const DESIGN_STAGE = { "Stairs": "stairs", "Accessible housing": "access", "Light": "light", "Parking": "parking", "Roads": "parking" };
-	const DESIGN_ORDER = ["Living", "Kitchens", "Bedrooms", "Bathrooms", "Human dimensions", "Circulation", "Hotels", "Restaurants", "Offices", "Schools", "Libraries", "Hospitals", "Auditoria", "Sports", "Retail", "Storage", "Structure", "Stairs", "Accessible housing", "Light", "Parking", "Roads"];
+	const DESIGN_STAGE = { "Industry": "ops", "Warehouses": "ops", "Loading and trucks": "ops", "Storage": "ops", "Stairs": "stairs", "Accessible housing": "access", "Light": "light", "Parking": "parking", "Roads": "parking" };
+	const DESIGN_ORDER = ["Loading and trucks", "Warehouses", "Storage", "Industry", "Living", "Kitchens", "Bedrooms", "Bathrooms", "Human dimensions", "Circulation", "Hotels", "Restaurants", "Offices", "Schools", "Libraries", "Hospitals", "Auditoria", "Sports", "Retail", "Storage", "Structure", "Stairs", "Accessible housing", "Light", "Parking", "Roads"];
+	// Relevance by building type: topics in the order that type needs them, and an Essentials list first.
+	// "group:Name" pulls every Neufert entry of that group that fits the type.
+	const TYPE_PLAN = {
+		res: { order: ["spaces", "stairs", "light", "services", "access", "parking", "fire", "site"],
+			key: ["room-area", "room-height", "kitchen", "bath", "bath-vent", "openings", "stair-width", "riser", "tread", "parapet", "wc-home", "water-home", "tanks", "car-space", "nf-kitchen-worktop", "nf-kitchen-aisle", "nf-dining-desk-tables", "nf-bedroom-furniture", "nf-bathroom-layouts"] },
+		edu: { order: ["spaces", "fire", "stairs", "services", "access", "light", "parking", "site"],
+			key: ["nf3-classroom-area", "edu-height", "nf-primary-school-areas", "nf3-secondary-school-rooms", "nf-science-rooms", "stair-width", "occupant-load", "exit-width", "travel", "school-egress", "wc-school", "lux-education", "fire-table7-edu", "nf3-lecture-theatre", "schools"] },
+		health: { order: ["spaces", "fire", "access", "services", "stairs", "light", "parking", "site"],
+			key: ["nf-ward-room", "nf3-hospital-corridors", "nf3-bed-lifts", "lift-sizes", "hospital-egress", "fire-hospital", "fire-table7-hospital", "wc-hospital", "lux-health", "water-other", "acc-bedroom", "acc-toilet", "ramp", "hospitals"] },
+		assembly: { order: ["fire", "spaces", "services", "access", "parking", "stairs", "light", "site"],
+			key: ["occupant-load", "assembly-seating", "assembly-exits", "exit-width", "travel", "assembly-railings", "nf3-theatre-seating", "nf3-theatre-sightlines", "nf3-cinema-sightlines", "nf3-cinema-seating", "acc-seating", "wc-assembly", "fire-assembly-stage", "fire-table7-assembly", "nf-room-volume"] },
+		business: { order: ["spaces", "fire", "services", "parking", "access", "stairs", "light", "site"],
+			key: ["nf3-office-area-per-person", "nf3-office-types", "nf-office-depth", "nf3-office-desks", "room-height", "ac-height", "cabin", "wc-office", "lux-office", "lift-planning", "occupant-load", "exit-width", "travel", "fire-table7-business", "parking-norms"] },
+		retail: { order: ["spaces", "fire", "parking", "services", "access", "stairs", "light", "site"],
+			key: ["occupant-load", "exit-width", "travel", "fire-table7-mercantile", "fire-assembly-stage", "refuge-area", "escalators", "wc-mall", "wc-restaurant", "lux-hospitality", "nf3-restaurant-area-per-seat", "nf3-restaurant-table-sizes", "acc-counters", "parking-norms"] },
+		industrial: { order: ["ops", "fire", "site", "parking", "spaces", "services", "stairs", "light", "access"], ops: "Production, loading and trucks", groups: ["Loading and trucks", "Industry", "Warehouses"],
+			key: ["nf3-forklift-trucks", "nf3-truck-yard-depth", "nf3-loading-dock-height", "nf3-truck-turning", "nf3-shed-spans", "nf3-overhead-cranes", "nf3-factory-area-per-worker", "nf3-factory-gangways", "nf3-loading-bay-spacing", "ind-height", "nf3-workplace-toilets", "wc-factory", "nf-vehicle-sizes", "parking-norms", "nf-goods-lift", "industrial-egress", "travel", "fire-table7-industrial", "fire-table7-g3", "fire-industrial-walls", "fire-industrial-venting", "fire-tender-access"] },
+		storage: { order: ["ops", "fire", "parking", "site", "spaces", "services", "stairs", "light", "access"], ops: "Storage, handling and trucks", groups: ["Warehouses", "Loading and trucks", "Industry"],
+			key: ["nf3-barrel-drum-storage", "nf3-pallets-containers", "nf3-forklift-trucks", "nf3-pallet-racking", "nf3-pallet-rack-aisles", "nf3-loading-dock-height", "nf3-truck-yard-depth", "nf3-high-bay-stacking", "nf3-store-area-per-tonne", "nf3-warehouse-safety", "nf3-truck-turning", "parking-norms", "nf-goods-lift", "storage-egress", "fire-table7-storage", "fire-compartment", "fire-sprinklers", "fire-tender-access", "wc-factory"] },
+	};
+	const specific = (s, type) => s.uses.indexOf("all") < 0 && s.uses.indexOf(type) >= 0;
 	const TOPIC_STAGE = { "Parking": "parking", "Sanitation": "services", "Services and sustainability": "services", "Stairs, corridors and exits": "fire", "Rooms and spaces": "spaces", "Building elements": "spaces", "Accessibility": "access", "Swimming pools": "spaces" };
 	const stageOf = (s) => s.cat === "bylaws" ? TOPIC_STAGE[s.topic] || "site" : s.cat === "design" ? DESIGN_STAGE[s.group] || "spaces" : STAGE_OF[s.cat] || s.cat;
 	// Sub-heading inside a stage: code categories first, then Neufert design data by group.
-	const subOf = (s) => s.cat === "design" ? "Design data · " + s.group : s.group || catName(s.cat);
+	const subOf = (s) => s.cat === "design" ? s.group + " (Neufert)" : s.group || catName(s.cat);
 	const FIRE_ORDER = ["Occupants and exit width", "Escape routes", "Exit stairs and refuge", "Fire tender access and high-rise", "Fire-fighting systems", "Construction and compartments", "Smoke, basements and services", "By building type"];
 	const subRank = (s) => s.cat === "design" ? 100 + DESIGN_ORDER.indexOf(s.group) : s.cat === "fire" ? 50 + FIRE_ORDER.indexOf(s.group) : CATS.findIndex((c) => c.id === s.cat);
 	const srcTag = (s) => s.cat === "bylaws" ? s.state.toUpperCase() : s.src[0].split(/[ ,]/)[0];
@@ -178,22 +199,36 @@
 		const t = TYPES.find((x) => x.id === type);
 		if (!t) { location.hash = "#/"; return; }
 		const st = stateOf(prefs.state), list = forBuilding(type);
-		const groups = STAGES.map((g) => [g[0], g[1], list.filter((s) => stageOf(s) === g[0])]).filter((g) => g[2].length);
+		const plan = TYPE_PLAN[type] || { order: STAGES.map((g) => g[0]), key: [] };
+		const name = (id) => id === "ops" && plan.ops || (STAGES.find((g) => g[0] === id) || [id, id])[1];
+		const key = [];
+		plan.key.forEach((k) => (k.indexOf("group:") === 0 ? list.filter((s) => s.cat === "design" && s.group === k.slice(6)) : list.filter((s) => s.id === k)).forEach((s) => { if (key.indexOf(s) < 0) key.push(s); }));
+		const groups = (key.length ? [["key", "Essentials", key]] : []).concat(plan.order.map((id) => [id, name(id), list.filter((s) => stageOf(s) === id)]).filter((g) => g[2].length));
 		const cur = groups.find((g) => g[0] === stage) || groups[0];
-		const items = cur[2].slice().sort((x, y) => subRank(x) - subRank(y));
-		let sub = "", body = "";
-		items.forEach((s) => {
-			const k = subOf(s);
-			if (k !== sub) { body += (sub ? "</div>" : "") + '<h3 class="sub-h">' + esc(k) + '</h3><div class="rowlist">'; sub = k; }
-			body += row(s);
-		});
+		let body = "";
+		if (cur[0] === "key") body = '<p class="sub key-sub">The standards most looked up for ' + esc(t.name.toLowerCase()) + " buildings, most important first. Every topic is in the tabs above.</p>" + '<div class="rowlist">' + key.map(row).join("") + "</div>";
+		else {
+			// sub-groups that hold standards written for this building type come first, and those standards lead within them
+			const subs = [];
+			cur[2].forEach((s) => { const k = subOf(s); let g = subs.find((x) => x.k === k); if (!g) subs.push(g = { k: k, rank: subRank(s), items: [] }); g.items.push(s); });
+			const kr = (s) => { const i = plan.key.indexOf(s.id); return i < 0 ? 999 : i; };
+			subs.forEach((g) => {
+				g.hit = g.items.some((s) => specific(s, type));
+				const gi = plan.groups ? plan.groups.indexOf(g.items[0].group) : -1;
+				if (gi >= 0) g.rank = -10 + gi;
+				g.items.sort((x, y) => (kr(x) - kr(y)) || (specific(y, type) - specific(x, type)));
+				g.kmin = kr(g.items[0]);
+			});
+			subs.sort((x, y) => (x.kmin - y.kmin) || (y.hit - x.hit) || (x.rank - y.rank));
+			body = subs.map((g) => '<h3 class="sub-h">' + esc(g.k) + '</h3><div class="rowlist">' + g.items.map(row).join("") + "</div>").join("");
+		}
 		$("building").innerHTML = '<div class="b-head"><a class="back" href="#/">← All buildings</a>' +
 			'<div class="b-title"><span class="bld-ico lg">' + icon(type) + '</span><div><span class="k">NBC group ' + esc(t.nbc) + "</span><h1>" + esc(t.name) + "</h1></div></div>" +
 			'<p class="sub">' + list.length + " standards for " + esc(t.name.toLowerCase()) + " buildings, by topic. Tap one for its drawing, calculator and clause.</p>" +
 			'<div class="b-actions"><button type="button" class="btn primary" id="b-save">Save all to a new project</button><button type="button" class="btn" id="b-pdf">Download all · PDF</button>' +
 			'<a class="btn ghost" href="#/bylaws/' + st.id + "/" + type + '">' + esc(st.name) + " bylaws →</a></div></div>" +
 			'<nav class="stages" role="tablist" aria-label="Topics">' + groups.map((g) => '<button type="button" role="tab" data-stage="' + g[0] + '" aria-selected="' + (g === cur) + '"' + (g === cur ? ' class="on"' : "") + ">" + esc(g[1]) + "<i>" + g[2].length + "</i></button>").join("") + "</nav>" +
-			'<section class="stage" role="tabpanel"><h2>' + esc(cur[1]) + '<span class="count">' + cur[2].length + "</span></h2>" + body + "</div></section>";
+			'<section class="stage" role="tabpanel"><h2>' + esc(cur[1]) + '<span class="count">' + cur[2].length + "</span></h2>" + body + "</section>";
 		$("b-save").addEventListener("click", () => {
 			const name = window.prompt("Name the project", t.name + " project");
 			if (name == null) return;
