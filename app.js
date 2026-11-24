@@ -63,7 +63,6 @@
 	const state = { q: "", cat: "" };
 	$("popular").innerHTML = ["setback", "toilets", "water tank", "stair riser", "ramp", "parking", "kitchen size", "fsi", "door width"].map((q) => '<button type="button" class="chip">' + q + "</button>").join("");
 	TYPES.forEach((t) => { $("np-type").insertAdjacentHTML("beforeend", '<option value="' + t.id + '">' + esc(t.name) + "</option>"); });
-	$("state-pick").innerHTML = B.STATES.map((x) => '<option value="' + x.id + '">' + esc(x.name) + "</option>").join("");
 
 	const words = (q) => q.toLowerCase().replace(/[^a-z0-9.:/ ]+/g, " ").split(/\s+/).filter((w) => w.length > 1);
 	function score(s, ws) {
@@ -116,7 +115,7 @@
 		storage: '<path d="M3 9l9-5 9 5v11H3z"/><path d="M7 20v-7h10v7M7 16h10"/>',
 	};
 	const icon = (t) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (ICON[t] || "") + "</svg>";
-	const forBuilding = (type) => STANDARDS.filter((s) => s.cat === "bylaws" ? s.state === prefs.state && fits(s, type) : fits(s, type));
+	const forBuilding = (type) => STANDARDS.filter((s) => s.cat !== "bylaws" && fits(s, type));
 	const QUIZ = window.AXS.QUIZ || [], UPDATES = window.AXS.UPDATES || [];
 
 	function renderDaily() {
@@ -150,19 +149,23 @@
 	});
 
 	function renderHome() {
-		$("state-pick").value = prefs.state;
 		$("buildings").innerHTML = TYPES.map((t) => '<a class="bld" href="#/b/' + t.id + '"><span class="bld-ico">' + icon(t.id) + "</span><b>" + esc(t.name) + "</b><small>" + esc(t.eg || "") + '</small><i class="num">' + forBuilding(t.id).length + "</i></a>").join("");
 		const recent = prefs.recent.map(byId).filter(Boolean).slice(0, 6);
 		$("recent").innerHTML = recent.length ? '<div class="sec-head"><h2>Recently viewed</h2></div><div class="chips recent">' + recent.map((s) => '<button type="button" class="chip" data-open="' + s.id + '">' + esc(s.title) + " <b>" + esc(s.value) + "</b></button>").join("") + "</div>" : "";
 		$("cats").innerHTML = CATS.map((c) => '<button type="button" class="cat" data-cat="' + c.id + '"><b>' + esc(c.name) + "<i>" + STANDARDS.filter((s) => s.cat === c.id).length + "</i></b><small>" + esc(c.blurb) + "</small></button>").join("");
 	}
-	$("state-pick").addEventListener("change", (e) => { prefs.state = e.target.value; keep(PREF, prefs); renderHome(); });
 
 	/* ---------- One building: everything it needs, in design order ---------- */
-	const STAGES = [["site", "Site and bylaws"], ["spaces", "Rooms and spaces"], ["stairs", "Stairs and parapets"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and exits"], ["services", "Services, water and toilets"], ["parking", "Parking"]];
-	const STAGE_OF = { planning: "site", rooms: "spaces", design: "spaces", water: "services", sanitary: "services" };
+	const STAGES = [["spaces", "Rooms and spaces"], ["stairs", "Stairs"], ["access", "Accessibility"], ["light", "Light and air"], ["fire", "Fire and life safety"], ["services", "Water, toilets and services"], ["parking", "Parking"], ["site", "Site and planning"]];
+	const STAGE_OF = { planning: "site", rooms: "spaces", water: "services", sanitary: "services" };
+	const DESIGN_STAGE = { "Stairs": "stairs", "Accessible housing": "access", "Light": "light", "Parking": "parking", "Roads": "parking" };
+	const DESIGN_ORDER = ["Living", "Kitchens", "Bedrooms", "Bathrooms", "Human dimensions", "Circulation", "Hotels", "Restaurants", "Offices", "Schools", "Libraries", "Hospitals", "Auditoria", "Sports", "Retail", "Storage", "Structure", "Stairs", "Accessible housing", "Light", "Parking", "Roads"];
 	const TOPIC_STAGE = { "Parking": "parking", "Sanitation": "services", "Services and sustainability": "services", "Stairs, corridors and exits": "fire", "Rooms and spaces": "spaces", "Building elements": "spaces", "Accessibility": "access", "Swimming pools": "spaces" };
-	const stageOf = (s) => s.cat === "bylaws" ? TOPIC_STAGE[s.topic] || "site" : STAGE_OF[s.cat] || s.cat;
+	const stageOf = (s) => s.cat === "bylaws" ? TOPIC_STAGE[s.topic] || "site" : s.cat === "design" ? DESIGN_STAGE[s.group] || "spaces" : STAGE_OF[s.cat] || s.cat;
+	// Sub-heading inside a stage: code categories first, then Neufert design data by group.
+	const subOf = (s) => s.cat === "design" ? "Design data · " + s.group : s.group || catName(s.cat);
+	const FIRE_ORDER = ["Occupants and exit width", "Escape routes", "Exit stairs and refuge", "Fire tender access and high-rise", "Fire-fighting systems", "Construction and compartments", "Smoke, basements and services", "By building type"];
+	const subRank = (s) => s.cat === "design" ? 100 + DESIGN_ORDER.indexOf(s.group) : s.cat === "fire" ? 50 + FIRE_ORDER.indexOf(s.group) : CATS.findIndex((c) => c.id === s.cat);
 	const srcTag = (s) => s.cat === "bylaws" ? s.state.toUpperCase() : s.src[0].split(/[ ,]/)[0];
 	function row(s) {
 		const fig = figOf(s);
@@ -171,19 +174,26 @@
 			'<div class="ri"><h3>' + esc(s.title) + '</h3><p class="s">' + esc(s.sub) + '</p><p class="src">' + esc(cite(s)) + (s.calc && CALC[s.calc] ? ' <span class="has-calc">∑ Calculator</span>' : "") + "</p></div>" +
 			'<div class="ri-v num grad">' + esc(s.value) + "</div>" + saveBtn(s) + "</article>";
 	}
-	function renderBuilding(type) {
+	function renderBuilding(type, stage) {
 		const t = TYPES.find((x) => x.id === type);
 		if (!t) { location.hash = "#/"; return; }
 		const st = stateOf(prefs.state), list = forBuilding(type);
 		const groups = STAGES.map((g) => [g[0], g[1], list.filter((s) => stageOf(s) === g[0])]).filter((g) => g[2].length);
-		const rules = list.some((s) => s.cat === "bylaws");
+		const cur = groups.find((g) => g[0] === stage) || groups[0];
+		const items = cur[2].slice().sort((x, y) => subRank(x) - subRank(y));
+		let sub = "", body = "";
+		items.forEach((s) => {
+			const k = subOf(s);
+			if (k !== sub) { body += (sub ? "</div>" : "") + '<h3 class="sub-h">' + esc(k) + '</h3><div class="rowlist">'; sub = k; }
+			body += row(s);
+		});
 		$("building").innerHTML = '<div class="b-head"><a class="back" href="#/">← All buildings</a>' +
-			'<div class="b-title"><span class="bld-ico lg">' + icon(type) + '</span><div><span class="k">NBC group ' + esc(t.nbc) + " · " + esc(st.name) + " rules</span><h1>" + esc(t.name) + "</h1></div></div>" +
-			'<p class="sub">' + list.length + " standards and rules, in the order you design: site first, parking last. Tap one for its drawing, calculator and clause.</p>" +
-			(rules ? "" : '<p class="sub">' + esc(st.name) + ' rules are being added. Until then, <a href="#/bylaws/' + st.id + '">see the official document</a>.</p>') +
-			'<div class="b-actions"><button type="button" class="btn primary" id="b-save">Save all to a new project</button><button type="button" class="btn" id="b-pdf">Download all · PDF</button></div></div>' +
-			'<nav class="stages" aria-label="Design stages">' + groups.map((g, i) => '<button type="button" data-goto="st-' + g[0] + '"><i>' + (i + 1) + "</i>" + esc(g[1]) + "</button>").join("") + "</nav>" +
-			groups.map((g, i) => '<section class="stage" id="st-' + g[0] + '"><h2><i>' + (i + 1) + "</i>" + esc(g[1]) + '<span class="count">' + g[2].length + '</span></h2><div class="rowlist">' + g[2].map(row).join("") + "</div></section>").join("");
+			'<div class="b-title"><span class="bld-ico lg">' + icon(type) + '</span><div><span class="k">NBC group ' + esc(t.nbc) + "</span><h1>" + esc(t.name) + "</h1></div></div>" +
+			'<p class="sub">' + list.length + " standards for " + esc(t.name.toLowerCase()) + " buildings, by topic. Tap one for its drawing, calculator and clause.</p>" +
+			'<div class="b-actions"><button type="button" class="btn primary" id="b-save">Save all to a new project</button><button type="button" class="btn" id="b-pdf">Download all · PDF</button>' +
+			'<a class="btn ghost" href="#/bylaws/' + st.id + "/" + type + '">' + esc(st.name) + " bylaws →</a></div></div>" +
+			'<nav class="stages" role="tablist" aria-label="Topics">' + groups.map((g) => '<button type="button" role="tab" data-stage="' + g[0] + '" aria-selected="' + (g === cur) + '"' + (g === cur ? ' class="on"' : "") + ">" + esc(g[1]) + "<i>" + g[2].length + "</i></button>").join("") + "</nav>" +
+			'<section class="stage" role="tabpanel"><h2>' + esc(cur[1]) + '<span class="count">' + cur[2].length + "</span></h2>" + body + "</div></section>";
 		$("b-save").addEventListener("click", () => {
 			const name = window.prompt("Name the project", t.name + " project");
 			if (name == null) return;
@@ -193,9 +203,19 @@
 			toast("Saved " + list.length + " to " + p.name);
 			location.hash = "#/p/" + p.id;
 		});
-		$("b-pdf").addEventListener("click", () => printBook(t.name + ": standards and rules", "NBC 2016 and " + st.short, list.map((s) => ({ s: s }))));
+		$("b-pdf").addEventListener("click", () => printBook(t.name + ": standards", "NBC 2016 and design data", list.map((s) => ({ s: s }))));
+		$("building").dataset.type = type;
 	}
-	$("building").addEventListener("click", (e) => { const b = e.target.closest("[data-goto]"); if (b) $(b.dataset.goto).scrollIntoView({ behavior: "smooth", block: "start" }); });
+	$("building").addEventListener("click", (e) => {
+		const b = e.target.closest("[data-stage]");
+		if (!b) return;
+		const type = $("building").dataset.type;
+		history.replaceState(null, "", "#/b/" + type + "/" + b.dataset.stage);
+		renderBuilding(type, b.dataset.stage);
+		const nav = $("building").querySelector(".stages");
+		if (nav.getBoundingClientRect().top < 0 || window.scrollY > nav.offsetTop) window.scrollTo(0, nav.offsetTop - 70);
+		nav.querySelector(".on").scrollIntoView({ block: "nearest", inline: "center" });
+	});
 
 	/* ---------- PDF: one standard, a building, or a project, through the browser's Save as PDF ---------- */
 	function printBook(title, sub, entries) {
@@ -614,15 +634,18 @@
 	}
 
 	/* ---------- State bylaws ---------- */
-	function renderBylaws(sid) {
-		const st = stateOf(sid) || B.STATES[0];
+	function renderBylaws(sid, type) {
+		const st = stateOf(sid) || stateOf(prefs.state) || B.STATES[0];
+		if (st && prefs.state !== st.id) { prefs.state = st.id; keep(PREF, prefs); }
 		if (!st) { $("bylaws").innerHTML = '<div class="page-head"><h1>State bylaws</h1></div><div class="soon">Coming soon.</div>'; return; }
-		const rules = B.RULES.filter((r) => r.state === st.id);
+		if (!TYPES.some((x) => x.id === type)) type = "";
+		const rules = B.RULES.filter((r) => r.state === st.id && (!type || fits(r, type)));
 		const topics = [];
 		rules.forEach((r) => { if (topics.indexOf(r.topic) < 0) topics.push(r.topic); });
 		$("bylaws").innerHTML = '<div class="page-head"><h1>State bylaws</h1><p class="sub">Each state\'s building rules, sorted by what you look for: setbacks, FSI, coverage, height, parking. Pick your state.</p></div>' +
-			'<div class="states">' + B.STATES.map((x) => '<a class="state' + (x.id === st.id ? " on" : "") + '" href="#/bylaws/' + x.id + '"><b>' + esc(x.name) + "</b><small>" + esc(x.short) + "</small></a>").join("") + "</div>" +
+			'<div class="states">' + B.STATES.map((x) => '<a class="state' + (x.id === st.id ? " on" : "") + '" href="#/bylaws/' + x.id + (type ? "/" + type : "") + '"><b>' + esc(x.name) + "</b><small>" + esc(x.short) + "</small></a>").join("") + "</div>" +
 			'<div class="doc"><span class="k">' + esc(st.authority) + "</span><h2>" + esc(st.doc) + '</h2><p class="meta">' + esc(st.note || "") + "</p>" + (st.url ? '<a href="' + esc(st.url) + '" target="_blank" rel="noopener">Official source ↗</a>' : "") + "</div>" +
+			(B.RULES.some((r) => r.state === st.id) ? '<div class="chips type-chips"><span>For</span>' + [{ id: "", name: "All buildings" }].concat(TYPES).map((x) => '<a class="chip' + (x.id === type ? " on" : "") + '" href="#/bylaws/' + st.id + (x.id ? "/" + x.id : "") + '">' + esc(x.name) + "</a>").join("") + "</div>" : "") +
 			(rules.length ? topics.map((t) => '<div class="results-head" style="margin-top:18px"><h2>' + esc(t) + '</h2><span class="count">' + rules.filter((r) => r.topic === t).length + '</span></div><div class="grid">' + rules.filter((r) => r.topic === t).map((r) => card(r)).join("") + "</div>").join("")
 				: '<div class="soon">The rules for ' + esc(st.name) + " are being added. The official document is linked above.</div>");
 	}
@@ -635,11 +658,11 @@
 	function refresh() { route(true); }
 	function route(keepSheet) {
 		const h = location.hash || "#/";
-		const m = h.match(/^#\/(projects|p|s|b|bylaws|tools)?\/?([\w-]*)/) || [];
+		const m = h.match(/^#\/(projects|p|s|b|bylaws|tools)?(?![\w-])\/?([\w-]*)\/?([\w-]*)/) || [];
 		if (m[1] === "projects") { show("projects"); renderProjects(); }
-		else if (m[1] === "bylaws") { show("bylaws"); renderBylaws(m[2]); }
+		else if (m[1] === "bylaws") { show("bylaws"); renderBylaws(m[2], m[3]); }
 		else if (m[1] === "tools") { show("tools"); renderTools(); }
-		else if (m[1] === "b") { show("building"); renderBuilding(m[2]); }
+		else if (m[1] === "b") { show("building"); renderBuilding(m[2], m[3]); }
 		else if (m[1] === "p" && project(m[2])) { show("project"); renderProject(project(m[2])); }
 		else { show("library"); renderLibrary(); if (m[1] === "s" && keepSheet !== true) openSheet(m[2]); }
 		if (keepSheet !== true && !/^#\/s\//.test(h) && !$("sheet").hidden) closeSheet();

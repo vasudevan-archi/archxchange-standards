@@ -266,8 +266,6 @@ select.input option { background: var(--bg-2); }
 .sec-head + .sec-sub { margin-top: -6px; }
 .sec-head h2 { font-size: clamp(22px, 4.5vw, 28px); }
 .sec-sub { margin: 0 0 14px; }
-.state-pick { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-3); }
-.state-pick select { height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line-2); background: rgba(0,0,0,.35); color: var(--text); font: 600 14px var(--font); }
 
 /* Daily strip: standard of the day, daily check, what's new */
 .daily { display: grid; gap: 10px; margin-top: 6px; }
@@ -436,3 +434,19 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 	.ri h3 { font-size: 15px; }
 	.ri-v { font-size: 18px; margin-top: 4px; }
 }
+
+/* Building page: one topic at a time (tabs), sub-headings inside */
+.stages button { padding: 8px 14px; }
+.stages button i { width: auto; height: auto; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--text-2); font: 600 11.5px var(--mono); }
+.stages button.on { background: var(--grad); color: #1a1208; border-color: transparent; }
+.stages button.on i { background: rgba(26,18,8,.15); color: #1a1208; }
+.stage { padding-top: 18px; }
+.stage h2 i { display: none; }
+.sub-h { margin: 22px 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--a2); }
+.stage h2 + .sub-h { margin-top: 8px; }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--text-2); }
+.btn.ghost:hover { color: var(--text); border-color: var(--a2); }
+.type-chips { margin: 16px 0 4px; align-items: center; }
+.type-chips > span { font-size: 13px; color: var(--text-2); margin-right: 2px; }
+a.chip { text-decoration: none; }
+.chip.on { background: var(--grad); color: #1a1208; border-color: transparent; font-weight: 600; }
